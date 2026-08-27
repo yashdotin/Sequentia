@@ -1,0 +1,72 @@
+{% extends "app_base.html" %}
+{% block title %}Profile · Sequentia{% endblock %}
+{% block app_content %}
+<h1 class="text-2xl font-semibold mb-1">Your profile</h1>
+<p class="text-slate-400 mb-6">Changing your goal or experience level recalculates your path.</p>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2 space-y-6">
+    <form method="post" class="space-y-5 bg-panel border border-slate-800 rounded-2xl p-6">
+      {% csrf_token %}
+      {% for field in form %}
+        <div>
+          <label class="block text-sm text-slate-300 mb-1">{{ field.label }}</label>
+          {{ field }}
+        </div>
+      {% endfor %}
+      <button type="submit" class="w-full py-2.5 rounded-lg bg-electric hover:bg-blue-600 transition font-medium">
+        Save & recalculate path
+      </button>
+    </form>
+
+    <div class="bg-panel border border-slate-800 rounded-2xl p-6">
+      <p class="text-sm font-medium mb-3">Skill evidence</p>
+      {% if known_skills or inferred_skills %}
+        {% if known_skills %}
+        <p class="text-xs text-slate-500 mb-1.5">Known</p>
+        <div class="flex flex-wrap gap-2 mb-4">
+          {% for s in known_skills %}
+            <span class="text-xs px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/30 text-green-300">{{ s.skill }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if inferred_skills %}
+        <p class="text-xs text-slate-500 mb-1.5">Inferred</p>
+        <div class="flex flex-wrap gap-2">
+          {% for s in inferred_skills %}
+            <span class="text-xs px-2.5 py-1 rounded-full bg-slate-700/40 border border-slate-600 text-slate-300">{{ s.skill }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% else %}
+        <p class="text-sm text-slate-500">No skill evidence yet — it's picked up from your goal text and completed courses.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="space-y-4">
+    <div class="bg-panel border border-slate-800 rounded-2xl p-5">
+      <p class="text-xs text-slate-400 mb-1">Path readiness</p>
+      <p class="text-2xl font-semibold">{{ readiness }}%</p>
+    </div>
+    <div class="bg-panel border border-slate-800 rounded-2xl p-5">
+      <p class="text-xs text-slate-400 mb-1">Courses completed</p>
+      <p class="text-2xl font-semibold">{{ completed_count }}</p>
+    </div>
+    <div class="bg-panel border border-slate-800 rounded-2xl p-5">
+      <p class="text-xs text-slate-400 mb-1">Path version</p>
+      <p class="text-2xl font-semibold">{{ path_version|default:"—" }}</p>
+    </div>
+    {% if profile.interests.exists %}
+    <div class="bg-panel border border-slate-800 rounded-2xl p-5">
+      <p class="text-xs text-slate-400 mb-2">Interests</p>
+      <div class="flex flex-wrap gap-2">
+        {% for i in profile.interests.all %}
+          <span class="text-xs px-2 py-1 rounded-full bg-violet/20 border border-violet/40">{{ i.label }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

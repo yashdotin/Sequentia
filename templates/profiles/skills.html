@@ -1,0 +1,40 @@
+{% extends "app_base.html" %}
+{% block title %}Skills · Sequentia{% endblock %}
+{% block app_content %}
+<div class="space-y-6">
+  <div class="flex items-center justify-between flex-wrap gap-3">
+    <div>
+      <h1 class="font-display text-2xl font-semibold">Skills</h1>
+      <p class="text-ink-muted text-sm mt-1">Why your path looks the way it does — evidence, relevance, and gap for each area.</p>
+    </div>
+    <a href="{% url 'catalog:saved_resources' %}" class="text-sm text-system hover:underline">★ Saved resources</a>
+  </div>
+
+  <div class="card overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-void/60 text-ink-faint text-left">
+        <tr>
+          <th class="px-4 py-3 font-medium">Skill</th>
+          <th class="px-4 py-3 font-medium">Domain</th>
+          <th class="px-4 py-3 font-medium">Evidence</th>
+          <th class="px-4 py-3 font-medium">Target relevance</th>
+          <th class="px-4 py-3 font-medium">Gap</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-edge">
+        {% for row in rows %}
+        <tr class="hover:bg-surface/50 transition">
+          <td class="px-4 py-3">
+            <a href="{% url 'catalog:resource_detail' row.course|slugify %}" class="hover:text-system">{{ row.course }}</a>
+          </td>
+          <td class="px-4 py-3 text-ink-muted">{{ row.domain }}</td>
+          <td class="px-4 py-3 text-ink-muted">{{ row.evidence }}</td>
+          <td class="px-4 py-3 text-ink-muted">{{ row.target_relevance }}</td>
+          <td class="px-4 py-3 text-ink-muted">{{ row.gap }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "app_base.html" %}
+{% block title %}Search · Sequentia{% endblock %}
+{% block app_content %}
+<div class="space-y-8">
+  <form method="get" action="{% url 'catalog:search' %}" class="flex gap-2 max-w-lg">
+    <input type="text" name="q" value="{{ q }}" placeholder="Search courses, skills, domains, projects..." class="flex-1 text-sm" autofocus>
+    <button type="submit" class="btn-primary px-5 py-2.5 text-sm">Search</button>
+  </form>
+
+  {% if q %}
+  <p class="text-ink-faint text-sm">Results for "<span class="text-ink-muted">{{ q }}</span>"</p>
+
+  {% if domain_results %}
+  <div>
+    <p class="text-xs tracking-wider text-ink-faint font-semibold uppercase mb-3">Domains</p>
+    <div class="flex flex-wrap gap-2">
+      {% for d in domain_results %}
+      <span class="text-xs px-2.5 py-1 rounded-full bg-surface-2 text-ink-muted">{{ d }}</span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div>
+    <p class="text-xs tracking-wider text-ink-faint font-semibold uppercase mb-3">Courses &amp; resources — {{ course_results|length }}</p>
+    {% if course_results %}
+    <div class="grid sm:grid-cols-2 gap-3">
+      {% for c in course_results %}
+      <a href="{% url 'catalog:resource_detail' c.course|slugify %}" class="card p-4 hover:border-system/50 transition block">
+        <p class="font-medium text-sm">{{ c.course }}</p>
+        <p class="text-xs text-ink-faint mt-1">{{ c.meta.domain }} · {{ c.meta.difficulty }}</p>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-ink-faint text-sm">No matching courses.</p>
+    {% endif %}
+  </div>
+
+  <div>
+    <p class="text-xs tracking-wider text-ink-faint font-semibold uppercase mb-3">Projects — {{ project_results|length }}</p>
+    {% if project_results %}
+    <div class="grid sm:grid-cols-2 gap-3">
+      {% for p in project_results %}
+      <div class="card p-4">
+        <p class="font-medium text-sm">{{ p.title }}</p>
+        <p class="text-xs text-ink-faint mt-1">{{ p.stage }} · {{ p.difficulty }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-ink-faint text-sm">No matching projects.</p>
+    {% endif %}
+  </div>
+  {% else %}
+  <p class="text-ink-faint text-sm">Search across your courses, skills, domains, and projects.</p>
+  {% endif %}
+</div>
+{% endblock %}

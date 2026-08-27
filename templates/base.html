@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Sequentia — Your career isn't a checklist{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
+</head>
+<body class="bg-void text-ink font-body min-h-screen">
+  {% block nav %}
+  <nav class="border-b border-edge sticky top-0 bg-void/90 backdrop-blur z-30">
+    <div class="max-w-6xl mx-auto px-5 py-4 flex items-center justify-between">
+      <a href="{% if user.is_authenticated %}{% url 'dashboard:home' %}{% else %}{% url 'dashboard:landing' %}{% endif %}"
+         class="font-display font-semibold tracking-tight text-lg flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-signal"></span>
+        SEQUENTIA
+      </a>
+      <div class="flex items-center gap-5 text-sm">
+        {% if user.is_authenticated %}
+          <span class="text-ink-muted hidden sm:inline">{{ user.username }}</span>
+          <form method="post" action="{% url 'accounts:logout' %}">
+            {% csrf_token %}
+            <button class="text-ink-muted hover:text-ink transition" type="submit">Log out</button>
+          </form>
+        {% else %}
+          <a href="{% url 'accounts:login' %}" class="text-ink-muted hover:text-ink transition">Log in</a>
+          <a href="{% url 'accounts:register' %}" class="btn-primary px-4 py-2 text-sm">
+            Build my path
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+  {% endblock %}
+
+  <main class="max-w-6xl mx-auto px-5 py-10">
+    {% include "partials/toasts.html" %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
