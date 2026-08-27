@@ -53,8 +53,11 @@ class OnboardingFlowTests(TestCase):
         response = self.client.post(
             reverse("profiles:onboarding"),
             {
-                "goal_text": "I want to become an AI/ML engineer. I know Python for Absolute Beginners.",
+                "destination_role": "AI/ML Engineer",
+                "known_skills": "Python for Absolute Beginners",
+                "interests": "Machine Learning",
                 "experience_level": "intermediate",
+                "extra_context": "",
             },
         )
         self.assertRedirects(response, reverse("pathway:path"))

@@ -16,14 +16,22 @@ from django.db import transaction
 from django.db.models import Max
 
 from apps.pathway.models import LearningPath, LearningPathItem, PathChangeEvent
+from apps.pathway.services.domain import (
+    FOUNDATION_DOMAINS,
+    determine_primary_domain,
+    relevant_domains,
+)
 from apps.profiles.models import LearnerProfile
 from apps.recommender.models import Recommendation
 from apps.recommender.services.explainability import explain_recommendation
 from apps.recommender.services.scoring import CourseScore, score_all_courses
 
-# Curated domain -> stage grouping. Like the metadata seed, this is a manual
-# categorization (not derived from the dataset) that gives the path a readable
-# shape (Foundations -> ... -> Specialization) instead of 13 flat domains.
+# --- Legacy constants -------------------------------------------------
+# No longer used by generate_path (see domain.py) — this fixed, universal
+# ordering was the actual root cause of the "every path looks ML-shaped"
+# bug: it unconditionally walked every learner through a Machine Learning
+# and Deep Learning stage regardless of their goal. Kept only in case
+# anything external still imports these names.
 DOMAIN_TO_STAGE = {
     "Programming Foundations": "Foundations",
     "Math Foundations": "Foundations",
@@ -53,6 +61,42 @@ STAGE_ORDER = [
 ITEMS_PER_STAGE = 4
 
 
+def _stage_for_domain(domain: str) -> str:
+    """Foundational domains collapse into one 'Foundations' stage; every
+    other domain becomes its own named stage. Replaces the old fixed
+    6-stage bucket, so a Web Development path shows stages named
+    'Web Development' / 'Cloud' / ... instead of a generic ML-shaped
+    'Core Skills' / 'Machine Learning' / 'Deep Learning' pipeline that
+    never applied to it in the first place."""
+    return "Foundations" if domain in FOUNDATION_DOMAINS else domain
+
+
+def _ordered_stage_names(primary_domain, relevant, domains_present: set[str]) -> list[str]:
+    stages: list[str] = []
+    if any(_stage_for_domain(d) == "Foundations" for d in domains_present):
+        stages.append("Foundations")
+
+    priority: list[str] = []
+    if primary_domain and primary_domain not in FOUNDATION_DOMAINS:
+        priority.append(primary_domain)
+    if relevant:
+        priority.extend(sorted(d for d in relevant if d not in FOUNDATION_DOMAINS and d != primary_domain))
+    for d in priority:
+        if d in domains_present and d not in stages:
+            stages.append(d)
+
+    # Anything else present — either the domain is unconstrained (relevant
+    # is None), or it's a domain the learner has real history in outside
+    # their current target — still gets shown, just after the main sequence,
+    # so completed work never silently disappears.
+    leftover = sorted(
+        d for d in domains_present
+        if _stage_for_domain(d) != "Foundations" and d not in stages
+    )
+    stages.extend(leftover)
+    return stages
+
+
 def _portfolio_relevant_skills() -> set[str]:
     """
     Courses that appear as a listed skill in the curated project seed
@@ -78,22 +122,38 @@ def _covered_courses(profile: LearnerProfile) -> set[str]:
 @transaction.atomic
 def generate_path(profile: LearnerProfile, query_text: str, reason: str) -> LearningPath:
     """
-    Scores every course, buckets eligible ones into stages, picks exactly one
-    "current" item, and persists the result as a new path version. Never
-    mutates an existing version — every regeneration is a new row, which is
-    what makes path history/versioning possible.
+    Scores every course, constrains eligible/blocked candidates to the
+    learner's actual target domain (+ legitimate adjacent domains) so a
+    Web Development goal doesn't pull in Machine Learning courses just
+    because they scored well semantically, buckets what's left into
+    per-learner stages, picks exactly one "current" item, and persists the
+    result as a new path version. Never mutates an existing version —
+    every regeneration is a new row, which is what makes path
+    history/versioning possible.
     """
     scores = score_all_courses(profile, query_text)
     covered = _covered_courses(profile)
     by_course: dict[str, CourseScore] = {s.course: s for s in scores}
 
-    eligible: list[CourseScore] = []
-    blocked: list[CourseScore] = []
+    primary_domain = determine_primary_domain(profile)
+    relevant = relevant_domains(primary_domain)
+    explicit_interests = set(profile.interests.values_list("label", flat=True))
+
+    def in_scope(course_score: CourseScore) -> bool:
+        if relevant is None:
+            return True
+        domain = course_score.meta.domain
+        return domain in FOUNDATION_DOMAINS or domain in relevant or domain in explicit_interests
+
     completed: list[CourseScore] = []
+    blocked: list[CourseScore] = []
+    eligible: list[CourseScore] = []
 
     for s in scores:
         if s.course in covered:
-            completed.append(s)
+            completed.append(s)  # history is never domain-filtered — it already happened
+        elif not in_scope(s):
+            continue  # out-of-domain and not eligible/blocked: don't recommend, don't show as blocked
         elif s.missing_prerequisites:
             blocked.append(s)
         else:
@@ -126,11 +186,19 @@ def generate_path(profile: LearnerProfile, query_text: str, reason: str) -> Lear
         is_current=True,
     )
 
+    domains_present = {s.meta.domain for s in (completed + eligible + blocked)}
+    stage_names = _ordered_stage_names(primary_domain, relevant, domains_present)
+
     position = 0
-    for stage in STAGE_ORDER:
-        stage_completed = [s for s in completed if DOMAIN_TO_STAGE.get(s.meta.domain) == stage]
-        stage_eligible = [s for s in eligible if DOMAIN_TO_STAGE.get(s.meta.domain) == stage]
-        stage_blocked = [s for s in blocked if DOMAIN_TO_STAGE.get(s.meta.domain) == stage]
+    for stage in stage_names:
+        if stage == "Foundations":
+            stage_completed = [s for s in completed if s.meta.domain in FOUNDATION_DOMAINS]
+            stage_eligible = [s for s in eligible if s.meta.domain in FOUNDATION_DOMAINS]
+            stage_blocked = [s for s in blocked if s.meta.domain in FOUNDATION_DOMAINS]
+        else:
+            stage_completed = [s for s in completed if s.meta.domain == stage]
+            stage_eligible = [s for s in eligible if s.meta.domain == stage]
+            stage_blocked = [s for s in blocked if s.meta.domain == stage]
 
         stage_items = (
             stage_completed[:ITEMS_PER_STAGE]
@@ -176,6 +244,9 @@ def generate_path(profile: LearnerProfile, query_text: str, reason: str) -> Lear
         new_version=path.version,
         reason=reason,
     )
+
+    from apps.pathway.services.path_validator import validate_path
+    validate_path(path)  # logs loudly on failure; see path_validator.py docstring
 
     return path
 

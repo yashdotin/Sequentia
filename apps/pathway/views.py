@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from apps.profiles.models import LearnerProfile, LearningHistoryEntry
@@ -8,7 +9,9 @@ from apps.recommender.ml.metadata import load_course_metadata
 from apps.recommender.models import Recommendation, RecommendationFeedback
 from .forms import PathFeedbackForm
 from .models import LearningPathItem, PathChangeEvent
+from .services.domain import determine_primary_domain, relevant_domains
 from .services.path_engine import generate_path, get_current_path, next_best_action, readiness_percent
+from .services.path_validator import validate_path
 
 _FOCUS_DOMAIN = {
     "focus_ai": "Deep Learning",
@@ -241,3 +244,79 @@ def history(request):
         "from_v": from_v,
         "to_v": to_v,
     })
+
+
+@login_required
+def diagnostics(request):
+    """
+    Backend diagnostic view (spec §45) — not part of the redesigned UI,
+    a plain JSON dump for debugging why a path looks the way it does.
+    Own-profile-only: no learner can inspect another's diagnostics.
+    """
+    profile = _owned_profile_or_none(request)
+    if not profile:
+        return JsonResponse({"error": "No profile yet."}, status=400)
+
+    path = get_current_path(profile)
+    if not path:
+        return JsonResponse({"error": "No path yet."}, status=400)
+
+    metadata = load_course_metadata()
+    primary_domain = determine_primary_domain(profile)
+    relevant = relevant_domains(primary_domain)
+
+    known_skills = list(profile.skills.filter(evidence_level="known").values_list("skill", flat=True))
+    covered = set(profile.history.filter(status="completed").values_list("course", flat=True))
+
+    items = list(path.items.all())
+    selected = []
+    for item in items:
+        meta = metadata.get(item.course)
+        selected.append({
+            "course": item.course,
+            "domain": meta.domain if meta else None,
+            "stage": item.stage,
+            "status": item.status,
+            "match_score": round(item.match_score, 4),
+            "reason": item.reason,
+        })
+
+    # Everything the catalog has that did NOT make it into this path, with why.
+    included_courses = {i.course for i in items}
+    rejected = []
+    for course, meta in metadata.items():
+        if course in included_courses:
+            continue
+        if course in covered:
+            continue
+        in_scope = (
+            relevant is None
+            or meta.domain in {"Programming Foundations", "Math Foundations", "Developer Tools", "Databases"}
+            or meta.domain in (relevant or set())
+            or meta.domain in set(profile.interests.values_list("label", flat=True))
+        )
+        rejected.append({
+            "course": course,
+            "domain": meta.domain,
+            "reason": "OUT_OF_DOMAIN" if not in_scope else "NOT_TOP_RANKED_FOR_STAGE",
+        })
+
+    validation = validate_path(path)
+
+    return JsonResponse({
+        "goal_text": profile.goal_text,
+        "target_role": profile.target_role,
+        "detected_primary_domain": primary_domain,
+        "relevant_domains": sorted(relevant) if relevant else None,
+        "known_skills": known_skills,
+        "completed_history": sorted(covered),
+        "path_version": path.version,
+        "selected_items": selected,
+        "rejected_sample": rejected[:30],
+        "rejected_total": len(rejected),
+        "validation": {
+            "ok": validation.ok,
+            "errors": validation.errors,
+            "warnings": validation.warnings,
+        },
+    }, json_dumps_params={"indent": 2})

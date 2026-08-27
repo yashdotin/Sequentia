@@ -3,8 +3,6 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 
 from apps.pathway.services.path_engine import (
-    DOMAIN_TO_STAGE,
-    STAGE_ORDER,
     get_current_path,
     next_best_action,
     readiness_percent,
@@ -28,13 +26,19 @@ def _greeting() -> str:
 
 
 def _stage_summary(items):
-    """Real per-stage rollup from actual path items — no fabricated percentages."""
+    """Real per-stage rollup from actual path items — no fabricated percentages.
+    Stage order follows the order stages first appear in the (position-ordered)
+    item list, since generate_path now derives stages per-learner from their
+    actual goal domain rather than a fixed universal list."""
     summary = []
     by_stage = {}
+    stage_order = []
     for item in items:
+        if item.stage not in by_stage:
+            stage_order.append(item.stage)
         by_stage.setdefault(item.stage, []).append(item)
 
-    for stage in STAGE_ORDER:
+    for stage in stage_order:
         stage_items = by_stage.get(stage)
         if not stage_items:
             continue
