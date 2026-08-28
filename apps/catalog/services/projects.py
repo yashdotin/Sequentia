@@ -39,6 +39,11 @@ class ProjectMeta:
     description: str
     portfolio_value: str
     project_type: str = ""
+    # Distinct from `skills` (what it demonstrates) — role targeting is
+    # deliberately separate from domain, since Web Development contains
+    # Frontend/Backend/Full Stack roles that shouldn't get each other's
+    # projects just because they share a domain.
+    target_roles: tuple[str, ...] = ()
     # Explicitly nullable/unknown rather than fabricated — no real duration
     # data exists for these curated projects.
     estimated_hours: float | None = None
@@ -54,6 +59,7 @@ def load_project_seed(path: str | Path | None = None) -> list[ProjectMeta]:
         reader = csv.DictReader(f)
         for row in reader:
             skills = tuple(s.strip() for s in row["skills"].split(",") if s.strip())
+            roles = tuple(r.strip() for r in row.get("target_roles", "").split(";") if r.strip())
             projects.append(ProjectMeta(
                 slug=row["slug"].strip(),
                 title=row["title"].strip(),
@@ -63,5 +69,6 @@ def load_project_seed(path: str | Path | None = None) -> list[ProjectMeta]:
                 description=row["description"].strip(),
                 portfolio_value=row["portfolio_value"].strip(),
                 project_type=row.get("project_type", "").strip(),
+                target_roles=roles,
             ))
     return projects

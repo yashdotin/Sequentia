@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import csv
 from dataclasses import dataclass, field
+from functools import lru_cache
 from pathlib import Path
 
 from django.conf import settings
@@ -36,6 +37,7 @@ def _parse_prereqs(raw: str) -> tuple[str, ...]:
     return tuple(p.strip() for p in raw.split(",") if p.strip())
 
 
+@lru_cache(maxsize=4)
 def load_course_metadata(path: str | Path | None = None) -> dict[str, CourseMeta]:
     """
     Returns {course_name: CourseMeta}. Raises MetadataError on malformed rows

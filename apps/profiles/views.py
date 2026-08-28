@@ -209,10 +209,13 @@ def skills(request):
     )
     metadata = load_course_metadata()
     skill_options = sorted(metadata.keys())
+    current_interests = list(profile.interests.order_by("label").values_list("label", flat=True))
+    domain_options = sorted({m.domain for m in metadata.values()})
 
     return render(request, "profiles/skills.html", {
         "rows": rows, "profile": profile,
         "known_skills": known_skills, "skill_options": skill_options,
+        "current_interests": current_interests, "domain_options": domain_options,
     })
 
 
@@ -266,4 +269,52 @@ def update_known_skills(request):
     query_text = _query_text_for(profile)
     generate_path(profile, query_text, reason=reason)
     messages.success(request, "Your skills were updated — path recalculated.")
+    return redirect("profiles:skills")
+
+
+@login_required
+def update_interests(request):
+    """
+    Mirrors update_known_skills. Interest is a secondary personalization
+    signal (see apps.pathway.services.domain / project_recommender's
+    _interest_alignment): it can nudge among already-in-scope resources but
+    can never override the primary goal/domain — that separation is
+    enforced in the scoring code, not here; this view is only responsible
+    for validating and persisting the interest itself.
+    """
+    profile = getattr(request.user, "learner_profile", None)
+    if not profile:
+        return redirect("profiles:onboarding")
+    if request.method != "POST":
+        return redirect("profiles:skills")
+
+    action = request.POST.get("action")
+    label = request.POST.get("interest", "").strip()
+    metadata = load_course_metadata()
+    valid_domains = {m.domain for m in metadata.values()}
+
+    if label not in valid_domains:
+        messages.error(request, "That's not a recognized interest category.")
+        return redirect("profiles:skills")
+
+    already_exists = LearnerInterest.objects.filter(profile=profile, label=label).exists()
+
+    if action == "add":
+        if already_exists:
+            messages.success(request, f'"{label}" is already one of your interests.')
+            return redirect("profiles:skills")  # no-op: don't create a pointless path version
+        LearnerInterest.objects.create(profile=profile, label=label)
+        reason = f'Interest added: {label}.'
+    elif action == "remove":
+        if not already_exists:
+            return redirect("profiles:skills")  # no-op
+        LearnerInterest.objects.filter(profile=profile, label=label).delete()
+        reason = f'Interest removed: {label}.'
+    else:
+        messages.error(request, "Unrecognized interest action.")
+        return redirect("profiles:skills")
+
+    query_text = _query_text_for(profile)
+    generate_path(profile, query_text, reason=reason)
+    messages.success(request, "Your interests were updated — recommendations recalculated.")
     return redirect("profiles:skills")

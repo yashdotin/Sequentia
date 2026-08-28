@@ -246,7 +246,28 @@ def generate_path(profile: LearnerProfile, query_text: str, reason: str) -> Lear
     )
 
     from apps.pathway.services.path_validator import validate_path
-    validate_path(path)  # logs loudly on failure; see path_validator.py docstring
+    validation = validate_path(path)
+
+    if not validation.ok:
+        # Hard rule (spec-mandated): an invalid path must never be the
+        # current one. Structurally this should be near-impossible — the
+        # eligibility gating above already enforces prerequisites — so a
+        # failure here means something upstream regressed, not a normal
+        # runtime condition. Roll back to the previous version rather than
+        # silently serving a broken recommendation.
+        path.is_current = False
+        path.save(update_fields=["is_current"])
+        if prev:
+            prev.is_current = True
+            prev.save(update_fields=["is_current"])
+            return prev
+        # No previous version to fall back to (this was the very first
+        # generation for this learner) — there's nothing valid to serve
+        # instead, so this one has to stay current despite the failure.
+        # This should only ever happen if the eligibility logic itself has
+        # a bug; it is not a normal path for real input.
+        path.is_current = True
+        path.save(update_fields=["is_current"])
 
     return path
 

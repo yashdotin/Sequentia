@@ -264,3 +264,33 @@ class ProgressCalculationTests(TestCase):
             item.save(update_fields=["status"])
         expected = round(100 * half / len(items))
         self.assertEqual(readiness_percent(path), expected)
+
+
+class InvalidPathNeverBecomesCurrentTests(TestCase):
+    """Spec-mandated: 'do not merely log invalid paths and continue as if
+    they were valid' — an invalid generation must roll back to the previous
+    current version rather than replacing it. Eligibility gating makes a
+    genuinely invalid generation near-impossible in normal operation, so
+    this test forces the failure path directly to exercise the rollback
+    logic itself."""
+
+    def test_rollback_preserves_previous_valid_path_as_current(self):
+        from unittest.mock import patch
+        from apps.pathway.services.path_validator import ValidationResult
+
+        _, profile = _make_profile("rollbacktest", "I want to become a machine learning engineer")
+        path_v1 = generate_path(profile, "machine learning", reason="Initial")
+        self.assertTrue(LearningPath.objects.get(id=path_v1.id).is_current)
+
+        failing_result = ValidationResult()
+        failing_result.add_error("forced failure for rollback test")
+
+        with patch("apps.pathway.services.path_validator.validate_path", return_value=failing_result):
+            returned = generate_path(profile, "machine learning", reason="Second (forced invalid)")
+
+        path_v1.refresh_from_db()
+        self.assertTrue(path_v1.is_current, "previous valid path must remain current after a rejected generation")
+        self.assertEqual(returned.id, path_v1.id)
+        v2 = profile.paths.filter(version=2).first()
+        self.assertIsNotNone(v2)
+        self.assertFalse(v2.is_current)
