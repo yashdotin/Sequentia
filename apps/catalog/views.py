@@ -4,7 +4,6 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.defaultfilters import slugify
 
-from apps.dashboard.views import _stage_summary
 from apps.pathway.services.path_engine import get_current_path
 from apps.recommender.ml.inference import get_engine
 from apps.recommender.models import Recommendation, RecommendationFeedback
@@ -12,6 +11,7 @@ from apps.recommender.services.explainability import explain_recommendation
 from apps.recommender.services.scoring import score_all_courses
 
 from .models import LearnerProjectState, LearnerSavedResource
+from .services.project_recommender import recommend_projects
 from .services.projects import load_project_seed
 
 
@@ -150,20 +150,21 @@ def projects_list(request):
         return redirect("profiles:onboarding")
 
     path = get_current_path(profile)
-    items = list(path.items.all()) if path else []
-    stage_states = {s["name"]: s["state"] for s in _stage_summary(items)}
-
+    recommendations = recommend_projects(profile, path=path)
     states = {s.project_slug: s for s in profile.project_states.all()}
 
-    projects = load_project_seed()
+    # Grouped by real project domain now, not the old fixed path-stage
+    # string — unlocking itself no longer depends on this grouping at all,
+    # it's purely presentational (matches the existing template's
+    # `{% for stage, projects in by_stage.items %}` loop unchanged).
     by_stage = {}
-    for p in projects:
-        stage_state = stage_states.get(p.stage, "locked")
-        learner_state = states.get(p.slug)
-        by_stage.setdefault(p.stage, []).append({
-            "meta": p,
-            "locked": stage_state == "locked",
-            "state": learner_state,
+    for rec in recommendations:
+        by_stage.setdefault(rec.project.domain, []).append({
+            "meta": rec.project,
+            "locked": rec.status == "locked",
+            "state": states.get(rec.project.slug),
+            "reason": rec.reason,
+            "readiness": rec.readiness,
         })
 
     completed_count = sum(1 for s in states.values() if s.status in ("completed", "published"))
@@ -173,7 +174,7 @@ def projects_list(request):
         "by_stage": by_stage,
         "completed_count": completed_count,
         "github_count": github_count,
-        "total_count": len(projects),
+        "total_count": len(recommendations),
     })
 
 
@@ -191,6 +192,7 @@ def project_action(request, slug):
 
     action = request.POST.get("action")
     state, _ = LearnerProjectState.objects.get_or_create(profile=profile, project_slug=slug)
+    was_completed_before = state.status in ("completed", "published")
 
     if action == "start":
         state.status = "in_progress"
@@ -205,6 +207,28 @@ def project_action(request, slug):
         return redirect("catalog:projects")
 
     state.save()
+
+    # Completing a project is real practical evidence for the skills it
+    # demonstrates — strengthen it as "inferred" (never "known"; a project
+    # isn't proof of mastery the way explicit self-report is) and only if
+    # there's no stronger evidence already. Only fires once, the first time
+    # the project transitions into completed/published.
+    if action in ("complete", "publish") and not was_completed_before:
+        from apps.profiles.models import LearnerSkillEvidence
+        for skill in projects[slug].skills:
+            existing = LearnerSkillEvidence.objects.filter(profile=profile, skill=skill).first()
+            if existing and existing.evidence_level == "known":
+                continue  # don't downgrade stronger, self-reported evidence
+            LearnerSkillEvidence.objects.update_or_create(
+                profile=profile, skill=skill,
+                defaults={"evidence_level": "inferred", "source": "project_completion"},
+            )
+
+        from apps.pathway.services.path_engine import generate_path
+        from apps.profiles.views import _query_text_for
+        query_text = _query_text_for(profile)
+        generate_path(profile, query_text, reason=f'Completed project "{projects[slug].title}".')
+
     if action in ("complete", "publish"):
         emoji = "🏆" if action == "publish" else "🎉"
         messages.success(request, f'{emoji} "{projects[slug].title}" {state.get_status_display().lower()}.', extra_tags="celebrate")

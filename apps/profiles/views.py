@@ -204,4 +204,66 @@ def skills(request):
         for s in scores[:30]
     ]
 
-    return render(request, "profiles/skills.html", {"rows": rows, "profile": profile})
+    known_skills = list(
+        profile.skills.filter(evidence_level="known").order_by("skill").values_list("skill", flat=True)
+    )
+    metadata = load_course_metadata()
+    skill_options = sorted(metadata.keys())
+
+    return render(request, "profiles/skills.html", {
+        "rows": rows, "profile": profile,
+        "known_skills": known_skills, "skill_options": skill_options,
+    })
+
+
+@login_required
+def update_known_skills(request):
+    """
+    Learner-driven skill evidence update (spec: known skills must be
+    editable after onboarding, not locked in at signup). Only touches
+    self-reported ("known", source="manual_skill_update") evidence — it
+    never overwrites or deletes evidence with a different source (e.g.
+    project_completion), per the "don't erase independent evidence" rule.
+    Always ownership-scoped via request.user.learner_profile; the client
+    never supplies a profile id.
+    """
+    profile = getattr(request.user, "learner_profile", None)
+    if not profile:
+        return redirect("profiles:onboarding")
+    if request.method != "POST":
+        return redirect("profiles:skills")
+
+    action = request.POST.get("action")
+    skill = request.POST.get("skill", "").strip()
+    metadata = load_course_metadata()
+
+    if skill not in metadata:
+        messages.error(request, "That's not a recognized skill in the catalog.")
+        return redirect("profiles:skills")
+
+    if action == "add":
+        LearnerSkillEvidence.objects.update_or_create(
+            profile=profile, skill=skill,
+            defaults={"evidence_level": "known", "source": "manual_skill_update"},
+        )
+        reason = f'You added "{skill}" as a known skill.'
+    elif action == "remove":
+        existing = LearnerSkillEvidence.objects.filter(profile=profile, skill=skill).first()
+        if existing and existing.source in ("manual_skill_update", "onboarding_picker", "onboarding_text"):
+            existing.delete()
+        elif existing:
+            messages.error(
+                request,
+                f'"{skill}" has evidence from {existing.get_source_display() if hasattr(existing, "get_source_display") else existing.source} '
+                "and can't be removed here.",
+            )
+            return redirect("profiles:skills")
+        reason = f'You removed "{skill}" from known skills.'
+    else:
+        messages.error(request, "Unrecognized skill action.")
+        return redirect("profiles:skills")
+
+    query_text = _query_text_for(profile)
+    generate_path(profile, query_text, reason=reason)
+    messages.success(request, "Your skills were updated — path recalculated.")
+    return redirect("profiles:skills")

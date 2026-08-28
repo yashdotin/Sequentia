@@ -2,8 +2,9 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
+from apps.pathway.models import LearningPath
 from apps.pathway.services.path_engine import generate_path
-from apps.profiles.models import LearnerProfile
+from apps.profiles.models import LearnerProfile, LearnerSkillEvidence
 from apps.profiles.services.extraction import extract_from_text
 
 
@@ -86,3 +87,80 @@ class ProfileSecurityTests(TestCase):
         )
         profile_a.refresh_from_db()
         self.assertEqual(profile_a.goal_text, "original goal")
+
+
+class KnownSkillUpdateTests(TestCase):
+    def _login(self, username="skillupdater"):
+        User.objects.filter(username=username).delete()
+        User.objects.create_user(username=username, password="testpass123")
+        self.client.login(username=username, password="testpass123")
+        profile = LearnerProfile.objects.create(
+            user=User.objects.get(username=username),
+            goal_text="I want to become a full stack web developer",
+            experience_level="beginner",
+        )
+        return profile
+
+    def test_add_valid_skill(self):
+        profile = self._login()
+        resp = self.client.post(reverse("profiles:update_skills"), {
+            "action": "add", "skill": "JavaScript Fundamentals",
+        })
+        self.assertRedirects(resp, reverse("profiles:skills"))
+        self.assertTrue(
+            LearnerSkillEvidence.objects.filter(
+                profile=profile, skill="JavaScript Fundamentals", evidence_level="known",
+                source="manual_skill_update",
+            ).exists()
+        )
+
+    def test_cannot_add_arbitrary_unrecognized_skill(self):
+        profile = self._login()
+        self.client.post(reverse("profiles:update_skills"), {
+            "action": "add", "skill": "Definitely Not A Real Course",
+        })
+        self.assertFalse(
+            LearnerSkillEvidence.objects.filter(profile=profile, skill="Definitely Not A Real Course").exists()
+        )
+
+    def test_remove_self_reported_skill(self):
+        profile = self._login()
+        LearnerSkillEvidence.objects.create(
+            profile=profile, skill="HTML and CSS for Beginners",
+            evidence_level="known", source="manual_skill_update",
+        )
+        self.client.post(reverse("profiles:update_skills"), {
+            "action": "remove", "skill": "HTML and CSS for Beginners",
+        })
+        self.assertFalse(
+            LearnerSkillEvidence.objects.filter(profile=profile, skill="HTML and CSS for Beginners").exists()
+        )
+
+    def test_skill_update_triggers_path_regeneration(self):
+        profile = self._login()
+        path_v1 = generate_path(profile, "full stack web developer", reason="Initial")
+        self.assertEqual(path_v1.version, 1)
+
+        self.client.post(reverse("profiles:update_skills"), {
+            "action": "add", "skill": "HTML and CSS for Beginners",
+        })
+
+        new_current = profile.paths.filter(is_current=True).first()
+        self.assertEqual(new_current.version, 2)
+        self.assertFalse(LearningPath.objects.get(id=path_v1.id).is_current)
+
+    def test_known_skill_update_changes_the_next_recommended_step(self):
+        profile = self._login()
+        path_before = generate_path(profile, "full stack web developer", reason="Initial")
+        before_courses = {i.course for i in path_before.items.filter(status__in=("current", "upcoming"))}
+
+        self.client.post(reverse("profiles:update_skills"), {
+            "action": "add", "skill": "HTML and CSS for Beginners",
+        })
+        self.client.post(reverse("profiles:update_skills"), {
+            "action": "add", "skill": "JavaScript Fundamentals",
+        })
+
+        path_after = profile.paths.filter(is_current=True).first()
+        after_courses = {i.course for i in path_after.items.filter(status__in=("current", "upcoming"))}
+        self.assertNotEqual(before_courses, after_courses)
