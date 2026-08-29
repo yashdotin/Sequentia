@@ -2,7 +2,7 @@
 
 ### Your Goal. Your Sequence. Your Path.
 
-**Sequentia is an AI-powered personalized learning-path recommender that goes beyond ranking courses — it decides what a learner should learn next, and explains why.**
+**Sequentia is a personalized learning-path recommender that goes beyond ranking courses — it decides what a learner should learn next, and explains why.**
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Sequentia-111827?style=for-the-badge)](https://sequentia-igzm.onrender.com/)
 [![Django](https://img.shields.io/badge/Django-4%2B-0C4B33?style=flat-square&logo=django&logoColor=white)](https://www.djangoproject.com/)
@@ -10,6 +10,40 @@
 [![ML](https://img.shields.io/badge/ML-TF--IDF%20%2B%20Word2Vec-7C3AED?style=flat-square)](#ml--nlp)
 
 > **Most platforms help you find learning content. Sequentia helps you decide what to learn next.**
+
+---
+
+## Product Preview
+
+### 1. Personalized Dashboard
+
+The dashboard turns a learner profile into a clear **current focus**, readiness signal, and staged journey instead of an overwhelming list of courses.
+
+![Sequentia Dashboard](docs/screenshots/dashboard.png)
+
+### 2. Skill Intelligence
+
+Known skills, interests, evidence, target relevance, and gaps are surfaced together so recommendations are grounded in the learner's current state.
+
+![Sequentia Skills](docs/screenshots/skills.png)
+
+### 3. Career Readiness
+
+Readiness is broken down by domain, making the largest gap and recommended next action visible rather than hiding them inside a generic recommendation score.
+
+![Sequentia Career Readiness](docs/screenshots/career-readiness.png)
+
+### 4. Adaptive Path History
+
+When learner state changes, the path can be recalculated. History records what changed and why, making the sequence observable rather than a black box.
+
+![Sequentia Path History](docs/screenshots/path-history.png)
+
+### 5. Portfolio-Oriented Projects
+
+Learning is connected to curated project briefs so progression can move from **skill → practice → portfolio evidence**.
+
+![Sequentia Projects](docs/screenshots/projects.png)
 
 ---
 
