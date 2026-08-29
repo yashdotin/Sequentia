@@ -13,6 +13,39 @@
 
 ---
 
+## Product Preview
+
+### 1. Personalized Dashboard
+
+The dashboard turns a learner profile into a clear **current focus**, readiness signal, and staged journey instead of an overwhelming list of courses.
+
+![Sequentia Dashboard](docs/screenshots/dashboard.png)
+
+### 2. Skill Intelligence
+
+Known skills, interests, evidence, target relevance, and gaps are surfaced together so recommendations are grounded in the learner's current state.
+
+![Sequentia Skills](docs/screenshots/skills.png)
+
+### 3. Career Readiness
+
+Readiness is broken down by domain, making the largest gap and recommended next action visible rather than hiding them inside a generic recommendation score.
+
+![Sequentia Career Readiness](docs/screenshots/career-readiness.png)
+
+### 4. Adaptive Path History
+
+When learner state changes, the path can be recalculated. History records what changed, making the sequence observable rather than a black box.
+
+![Sequentia Path History](docs/screenshots/path-history.png)
+
+### 5. Portfolio-Oriented Projects
+
+Learning is connected to curated project briefs so progression can move from **skill → practice → portfolio evidence**.
+
+![Sequentia Projects](docs/screenshots/projects.png)
+---
+
 ## Why Sequentia?
 
 Traditional recommendation systems often stop at **relevance**: find content that looks similar to the learner's query.
