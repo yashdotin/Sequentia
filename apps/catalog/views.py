@@ -162,16 +162,19 @@ def projects_list(request):
             "state": states.get(rec.project.slug),
             "reason": rec.reason,
             "readiness": rec.readiness,
+            "missing_skills": rec.missing_skills,
         })
 
     completed_count = sum(1 for s in states.values() if s.status in ("completed", "published"))
     github_count = sum(1 for s in states.values() if s.github_url)
+    unlocked_count = sum(1 for rec in recommendations if rec.status != "locked")
 
     return render(request, "catalog/projects.html", {
         "by_stage": by_stage,
         "completed_count": completed_count,
         "github_count": github_count,
         "total_count": len(recommendations),
+        "unlocked_count": unlocked_count,
     })
 
 

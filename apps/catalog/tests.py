@@ -255,3 +255,27 @@ class ProjectPrerequisiteDemonstratesSplitTests(TestCase):
         readiness, satisfied, missing = compute_readiness(profile, project)
         self.assertEqual(missing, list(project.skills))
         self.assertEqual(readiness, 0.0)
+
+
+class ProjectsPageEmptyStateTests(TestCase):
+    def test_shows_unlock_cta_when_no_projects_unlocked_yet(self):
+        user, profile = _make_profile("emptystatecheck", "I want to become a Full Stack Developer.")
+        from apps.pathway.services.path_engine import generate_path
+        generate_path(profile, profile.goal_text, reason="Initial")
+
+        self.client.login(username="emptystatecheck", password="testpass123")
+        response = self.client.get(reverse("catalog:projects"))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn("Go to My Path", content)
+        self.assertNotIn("Reach this stage in your path to unlock", content)
+
+    def test_locked_card_names_missing_courses_not_a_vague_message(self):
+        user, profile = _make_profile("lockedcardcheck", "I want to become a Full Stack Developer.")
+        from apps.pathway.services.path_engine import generate_path
+        generate_path(profile, profile.goal_text, reason="Initial")
+
+        self.client.login(username="lockedcardcheck", password="testpass123")
+        response = self.client.get(reverse("catalog:projects"))
+        content = response.content.decode()
+        self.assertIn("more course", content)

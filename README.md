@@ -2,7 +2,7 @@
 
 ### Your Goal. Your Sequence. Your Path.
 
-**Sequentia is a personalized learning-path recommender that goes beyond ranking courses — it decides what a learner should learn next, and explains why.**
+**Sequentia is an AI-powered personalized learning-path recommender that goes beyond ranking courses — it decides what a learner should learn next, and explains why.**
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Sequentia-111827?style=for-the-badge)](https://sequentia-igzm.onrender.com/)
 [![Django](https://img.shields.io/badge/Django-4%2B-0C4B33?style=flat-square&logo=django&logoColor=white)](https://www.djangoproject.com/)
@@ -10,40 +10,6 @@
 [![ML](https://img.shields.io/badge/ML-TF--IDF%20%2B%20Word2Vec-7C3AED?style=flat-square)](#ml--nlp)
 
 > **Most platforms help you find learning content. Sequentia helps you decide what to learn next.**
-
----
-
-## Product Preview
-
-### 1. Personalized Dashboard
-
-The dashboard turns a learner profile into a clear **current focus**, readiness signal, and staged journey instead of an overwhelming list of courses.
-
-![Sequentia Dashboard](docs/screenshots/dashboard.png)
-
-### 2. Skill Intelligence
-
-Known skills, interests, evidence, target relevance, and gaps are surfaced together so recommendations are grounded in the learner's current state.
-
-![Sequentia Skills](docs/screenshots/skills.png)
-
-### 3. Career Readiness
-
-Readiness is broken down by domain, making the largest gap and recommended next action visible rather than hiding them inside a generic recommendation score.
-
-![Sequentia Career Readiness](docs/screenshots/career-readiness.png)
-
-### 4. Adaptive Path History
-
-When learner state changes, the path can be recalculated. History records what changed and why, making the sequence observable rather than a black box.
-
-![Sequentia Path History](docs/screenshots/path-history.png)
-
-### 5. Portfolio-Oriented Projects
-
-Learning is connected to curated project briefs so progression can move from **skill → practice → portfolio evidence**.
-
-![Sequentia Projects](docs/screenshots/projects.png)
 
 ---
 
@@ -188,6 +154,16 @@ A highly relevant advanced resource can remain **blocked** until the learner has
 The path engine then chooses **exactly one current next-best action**.
 
 > **The highest-scoring course is not always the next course.**
+
+**Stack and domain scoping.** A goal is scoped to the domains actually
+relevant to it (`apps/pathway/services/domain.py`) — a Security goal shows
+Security, not Security+Cloud+DevOps+Systems; a Full Stack goal shows Web
+Development, not Web Development+Cloud+DevOps. Within that, a learner's
+known skills or goal wording are used to detect a language/framework stack
+(`apps/pathway/services/stack.py`) — a JavaScript/React learner gets a
+Node/React path with zero Python/Django/Java courses mixed in, and vice
+versa. Math Foundations only appears for genuinely quantitative goals
+(Data Science/ML/DL/Data Engineering), not for every path by default.
 
 ---
 
@@ -338,7 +314,7 @@ to print live catalog measurements rather than relying on hard-coded README numb
 
 ## Testing & Reliability
 
-The project includes **93 automated tests** covering areas such as:
+The project includes **111 automated tests** covering areas such as:
 
 - catalog validation
 - skill-graph integrity
@@ -349,6 +325,8 @@ The project includes **93 automated tests** covering areas such as:
 - path generation and versioning
 - prerequisite reasoning
 - AI Mentor grounding and fallback
+- stack-aware course filtering (no Python/JS/Java course mixing)
+- goal-relevant domain scoping (no unrelated stages for a narrow goal)
 - cross-user security isolation
 
 Core recommendation, scoring and path-generation logic does **not** require an external API.

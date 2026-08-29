@@ -22,6 +22,16 @@
     </div>
   </div>
 
+  {% if unlocked_count == 0 %}
+  <div class="card p-5 border border-accent/30 bg-accent/5 flex items-center justify-between gap-4 flex-wrap">
+    <div>
+      <p class="text-sm font-medium">Every project below is locked because no course is marked complete yet.</p>
+      <p class="text-xs text-ink-muted mt-1">Go to My Path and mark your current course as complete — the first project that needs only that course unlocks immediately.</p>
+    </div>
+    <a href="{% url 'pathway:path' %}" class="btn-primary px-4 py-2 text-xs shrink-0">Go to My Path →</a>
+  </div>
+  {% endif %}
+
   {% for stage, projects in by_stage.items %}
   <div>
     <p class="text-xs tracking-wider text-ink-faint font-semibold uppercase mb-4">{{ stage }}</p>
@@ -37,10 +47,22 @@
           <span class="text-[11px] px-2 py-0.5 rounded-full bg-surface-2 text-ink-muted">{{ p.meta.portfolio_value }} portfolio value</span>
         </div>
         <p class="text-xs text-ink-muted leading-relaxed mb-3">{{ p.meta.description }}</p>
-        <p class="text-[11px] text-ink-faint mb-4">{{ p.meta.skills|join:" · " }}</p>
+        {% if p.locked %}
+          {% if p.missing_skills %}
+            <p class="text-[11px] text-ink-faint mb-4">{{ p.missing_skills|join:" · " }}</p>
+          {% else %}
+            <p class="text-[11px] text-ink-faint mb-4">{{ p.reason }}</p>
+          {% endif %}
+        {% else %}
+          <p class="text-[11px] text-ink-faint mb-4">{{ p.meta.skills|join:" · " }}</p>
+        {% endif %}
 
         {% if p.locked %}
-          <p class="text-xs text-ink-faint">Reach this stage in your path to unlock.</p>
+          {% if p.missing_skills %}
+            <a href="{% url 'pathway:path' %}" class="text-xs text-system hover:underline">Complete {{ p.missing_skills|length }} more course{{ p.missing_skills|length|pluralize }} on My Path to unlock →</a>
+          {% else %}
+            <p class="text-xs text-ink-faint">{{ p.reason }}</p>
+          {% endif %}
         {% elif not p.state %}
           <form method="post" action="{% url 'catalog:project_action' p.meta.slug %}">
             {% csrf_token %}
