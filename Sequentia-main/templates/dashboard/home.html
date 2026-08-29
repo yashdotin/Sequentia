@@ -1,0 +1,124 @@
+{% extends "app_base.html" %}
+{% block title %}Dashboard · Sequentia{% endblock %}
+{% block app_content %}
+<div class="space-y-8">
+
+  <div class="flex items-center gap-3">
+    {% include "partials/companion.html" with state="ready" %}
+    <div>
+      <p class="text-ink-muted text-sm">{{ greeting }} 👋</p>
+      <h1 class="font-display text-2xl font-semibold mt-1">
+        You're on your way to becoming
+        <span class="text-system">{{ profile.target_role|default:"who you want to be" }}</span>.
+      </h1>
+    </div>
+  </div>
+
+  
+  <div class="card p-6">
+    <div class="flex items-end justify-between mb-3">
+      <p class="text-sm text-ink-muted">Career readiness</p>
+      <p class="stat text-3xl font-semibold text-ink">{{ readiness }}<span class="text-lg text-ink-faint">%</span></p>
+    </div>
+    <div class="h-2 rounded-full bg-edge overflow-hidden">
+      <div class="h-full bg-gradient-to-r from-system to-signal transition-all duration-500" style="width:{{ readiness }}%"></div>
+    </div>
+    <p class="text-xs text-ink-faint mt-3 stat">{{ completed_count }} / {{ total_items }} path items completed</p>
+  </div>
+
+  
+  {% if next_action %}
+  <div class="card-current p-6">
+    <div class="flex items-center gap-2 mb-3">
+      <span class="w-1.5 h-1.5 rounded-full bg-signal animate-pulse-thread"></span>
+      <p class="text-xs font-mono uppercase tracking-widest text-signal">Current focus</p>
+    </div>
+    <h2 class="font-display text-xl font-semibold mb-2">{{ next_action.course }}</h2>
+    <div class="flex flex-wrap gap-2 mb-4">
+      <span class="text-xs px-2.5 py-1 rounded-full bg-surface-2 text-ink-muted">{{ next_action.stage }}</span>
+      {% if next_action_meta %}
+      <span class="text-xs px-2.5 py-1 rounded-full bg-surface-2 text-ink-muted">{{ next_action_meta.difficulty }}</span>
+      <span class="text-xs px-2.5 py-1 rounded-full bg-surface-2 text-ink-muted">{{ next_action_meta.resource_type }}</span>
+      {% endif %}
+    </div>
+    <p class="text-sm text-ink-muted leading-relaxed mb-5">{{ next_action.reason }}</p>
+    <a href="{% url 'catalog:resource_detail' next_action.course|slugify %}" class="btn-primary inline-block px-5 py-2.5 text-sm">
+      Continue learning →
+    </a>
+  </div>
+  {% else %}
+  <div class="card p-6 text-center">
+    <p class="text-ink-muted text-sm">Nothing eligible to start right now — every open item is either done or waiting on a prerequisite.</p>
+  </div>
+  {% endif %}
+
+  
+  <div>
+    <div class="flex items-center gap-4 mb-5">
+      <h2 class="font-display text-lg font-semibold whitespace-nowrap">Your journey</h2>
+      <div class="thread flex-1"></div>
+    </div>
+    <div class="flex items-center gap-1 overflow-x-auto pb-2">
+      {% for stage in stage_summary %}
+      <div class="flex items-center shrink-0">
+        <div class="flex flex-col items-center gap-1.5 px-3">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs
+            {% if stage.state == 'done' %}bg-verified/15 text-verified border border-verified/40
+            {% elif stage.state == 'current' %}bg-signal/15 text-signal border border-signal animate-pulse-thread
+            {% elif stage.state == 'available' %}bg-system/15 text-system border border-system/40
+            {% else %}bg-surface-2 text-locked border border-edge{% endif %}">
+            {% if stage.state == 'done' %}✓{% elif stage.state == 'current' %}🔥{% elif stage.state == 'available' %}○{% else %}🔒{% endif %}
+          </div>
+          <p class="text-[11px] text-ink-muted text-center max-w-[70px] leading-tight">{{ stage.name }}</p>
+        </div>
+        {% if not forloop.last %}<div class="thread w-6 mb-4"></div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  
+  <div class="grid sm:grid-cols-2 gap-4">
+    {% for stage in stage_summary %}
+    <div class="card p-5">
+      <div class="flex items-center justify-between mb-3">
+        <p class="font-medium text-sm">{{ stage.name }}</p>
+        <p class="stat text-xs text-ink-faint">{{ stage.completed }}/{{ stage.total }}</p>
+      </div>
+      <div class="space-y-2">
+        {% for item in stage.items|slice:":4" %}
+        <div class="flex items-center gap-2.5 text-sm">
+          <span class="w-1.5 h-1.5 rounded-full shrink-0
+            {% if item.status == 'completed' %}bg-verified
+            {% elif item.status == 'current' %}bg-signal
+            {% elif item.status == 'upcoming' %}bg-system
+            {% else %}bg-locked{% endif %}"></span>
+          <span class="{% if item.status == 'blocked' %}text-ink-faint{% else %}text-ink-muted{% endif %} truncate">{{ item.course }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  
+  <div>
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-sm text-ink-muted">Recommended next</h2>
+      <a href="{% url 'pathway:path' %}" class="text-sm text-system hover:underline">View full path →</a>
+    </div>
+    <div class="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 -mx-1 px-1">
+      {% for item in upcoming %}
+      <a href="{% url 'catalog:resource_detail' item.course|slugify %}"
+         class="snap-start shrink-0 w-64 block card p-4 hover:border-system/50 transition">
+        <p class="text-xs text-ink-faint uppercase tracking-wide">{{ item.stage }}</p>
+        <p class="font-medium mt-1 text-sm">{{ item.course }}</p>
+        <p class="text-xs text-ink-muted mt-2 leading-relaxed">{{ item.reason|truncatechars:70 }}</p>
+      </a>
+      {% empty %}
+      <p class="text-ink-faint text-sm">Nothing else upcoming right now — check your full path.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

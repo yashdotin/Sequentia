@@ -1,0 +1,25 @@
+role_id,role_name,domain,required_skill_ids
+frontend-developer,Frontend Developer,Web Development,html|css|javascript|responsive-web|react|typescript|rest-api|testing|deployment
+backend-developer,Backend Developer,Web Development,python|rest-api|sql|postgresql|authentication|testing|deployment|system-design
+full-stack-developer,Full Stack Developer,Web Development,html|css|javascript|react|nodejs|rest-api|sql|postgresql|authentication|testing|deployment
+python-developer,Python Developer,Programming Foundations,python|python-oop|advanced-python|python-automation|rest-api|testing|deployment
+javascript-developer,JavaScript Developer,Web Development,javascript|javascript-async|typescript|react|nodejs|rest-api|testing|deployment
+data-analyst,Data Analyst,Data Analytics,excel|sql|statistics|data-analysis|eda|data-visualization|power-bi|tableau
+data-scientist,Data Scientist,Machine Learning,python|pandas|statistics|probability|eda|machine-learning|feature-engineering|supervised-learning|data-visualization
+data-engineer,Data Engineer,Data Engineering,python|sql|postgresql|data-modeling|advanced-sql|data-warehousing|etl|spark|kafka|docker
+machine-learning-engineer,Machine Learning Engineer,Machine Learning,python|pandas|statistics|probability|machine-learning|feature-engineering|supervised-learning|deep-learning|docker|mlops
+deep-learning-engineer,Deep Learning Engineer,Deep Learning,python|linear-algebra|machine-learning|deep-learning|pytorch|neural-networks|transfer-learning
+nlp-engineer,NLP Engineer,Deep Learning,python|machine-learning|nlp|deep-learning|pytorch|transfer-learning
+computer-vision-engineer,Computer Vision Engineer,Deep Learning,python|machine-learning|deep-learning|computer-vision|opencv|pytorch|transfer-learning
+ai-llm-engineer,AI/LLM Engineer,AI/ML,python|nlp|deep-learning|genai|prompt-engineering|llm|rag|vector-databases|evaluation|docker
+mlops-engineer,MLOps Engineer,MLOps,python|machine-learning|docker|kubernetes|cicd|mlops|model-serving|monitoring|aws
+devops-engineer,DevOps Engineer,DevOps,linux|shell|git|containers|docker|kubernetes|cicd|devops|aws|monitoring
+cloud-engineer,Cloud Engineer,Cloud,linux|devops|docker|aws|aws-architecture|azure|gcp|monitoring
+sre,SRE,DevOps,linux|shell|git|docker|kubernetes|cicd|monitoring|system-design
+cybersecurity-engineer,Cybersecurity Engineer,Security,linux|cybersecurity-fundamentals|ethical-hacking|authentication|cybersecurity-fundamentals
+mobile-developer,Mobile Developer,Mobile Development,mobile-development|react-native|flutter|android|ios
+android-developer,Android Developer,Mobile Development,java|android|mobile-development
+ios-developer,iOS Developer,Mobile Development,swift|ios|mobile-development
+blockchain-developer,Blockchain Developer,Blockchain,javascript|blockchain|solidity|smart-contracts|cybersecurity-fundamentals
+systems-engineer,Systems Engineer,Systems,cpp|linux|shell|system-design|embedded
+embedded-engineer,Embedded Engineer,Systems,cpp|embedded|iot|linux

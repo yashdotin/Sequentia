@@ -1,0 +1,97 @@
+skill_id,canonical_name,domain,aliases,parent_skill,prerequisite_skill_ids,applicable_roles,description
+python,Python,Programming Foundations,Python Programming;Python Fundamentals,,,Backend Developer;Full Stack Developer;Data Analyst;Data Scientist;Machine Learning Engineer,"General-purpose programming language, the base for the Python web/data/ML tracks."
+python-automation,Python Automation & Scripting,Programming Foundations,Scripting with Python,python,,Backend Developer;DevOps Engineer;Data Engineer,Using Python to automate real tasks (file/system/network scripting) rather than just language syntax.
+java,Java,Programming Foundations,Java Programming,,,Backend Developer;Mobile Developer,Core Java language and OOP fundamentals.
+cpp,C++,Programming Foundations,C Plus Plus;C++ Programming,,,Systems Engineer;Backend Developer,Systems-level programming language used for performance-critical and embedded work.
+git,Git and GitHub,Developer Tools,Version Control;Git,,,Backend Developer;Frontend Developer;Full Stack Developer;DevOps Engineer;Data Analyst;Data Scientist;Machine Learning Engineer;Mobile Developer;Systems Engineer,Version control and collaborative workflows.
+linux,Linux Command Line,Developer Tools,Linux Fundamentals;Shell,,,DevOps Engineer;Cloud Engineer;Systems Engineer;Cybersecurity Engineer;Backend Developer,"Shell fluency and Linux system basics — the prerequisite for containers, servers, and cloud work."
+sql,SQL,Databases,Structured Query Language,,,Backend Developer;Data Analyst;Data Scientist;Data Engineer;Full Stack Developer,Querying and manipulating relational data.
+advanced-sql,Advanced SQL & Query Optimization,Databases,Query Optimization,sql,,Data Engineer;Data Scientist;Backend Developer,"Query performance, indexing strategy, and execution-plan analysis beyond basic SQL."
+db-performance,Database Performance Tuning,Databases,,advanced-sql,,Data Engineer;Backend Developer,Diagnosing and fixing slow queries and schema-level performance bottlenecks in production databases.
+postgresql,PostgreSQL,Databases,Postgres,sql,,Backend Developer;Full Stack Developer;Data Engineer,Relational schema design and administration in PostgreSQL specifically.
+mongodb,MongoDB,Databases,NoSQL with MongoDB,sql,,Backend Developer;Full Stack Developer,Document-oriented NoSQL data modeling.
+redis,Redis Caching,Databases,,postgresql,,Backend Developer;DevOps Engineer,In-memory caching and session/queue patterns with Redis.
+html-css,HTML & CSS,Web Development,HTML/CSS Fundamentals,,,Frontend Developer;Full Stack Developer,Markup and styling fundamentals of the web.
+responsive-design,Responsive Web Design,Web Development,Mobile-first CSS,html-css,,Frontend Developer;Full Stack Developer,Building layouts that adapt across screen sizes.
+javascript,JavaScript,Web Development,JS Fundamentals,html-css,,Frontend Developer;Full Stack Developer;Backend Developer,Core language for interactive web behavior.
+async-javascript,Async JavaScript (ES6+),Web Development,Modern JavaScript;ES6+,javascript,,Frontend Developer;Full Stack Developer;Backend Developer,"Promises, async/await, modules, and modern ES6+ syntax — the gateway to React/Node."
+typescript,TypeScript,Web Development,,async-javascript,,Frontend Developer;Full Stack Developer;Backend Developer,Static typing layered on JavaScript for larger codebases.
+react,React,Web Development,React.js;ReactJS,async-javascript,,Frontend Developer;Full Stack Developer,"Component-based UI library, the most in-demand frontend framework."
+angular,Angular,Web Development,Angular Framework,async-javascript,,Frontend Developer;Full Stack Developer,Opinionated full-featured frontend framework.
+vue,Vue.js,Web Development,Vue,async-javascript,,Frontend Developer;Full Stack Developer,"Approachable, incrementally-adoptable frontend framework."
+react-native,React Native,Mobile Development,,react,,Mobile Developer,Cross-platform mobile apps using React.
+node,Node.js,Web Development,NodeJS,async-javascript,,Backend Developer;Full Stack Developer,Server-side JavaScript runtime.
+django,Django,Web Development,Django Web Framework,python,,Backend Developer;Full Stack Developer,Batteries-included Python web framework.
+flask,Flask,Web Development,Flask API Development,python,,Backend Developer;Full Stack Developer,Lightweight Python web/API microframework.
+rest-apis,REST APIs,Web Development,REST API Design,,,Backend Developer;Full Stack Developer;Mobile Developer,Designing and consuming RESTful HTTP APIs.
+graphql,GraphQL,Web Development,,rest-apis,,Backend Developer;Full Stack Developer,Query-language alternative to REST for flexible client data-fetching.
+golang,Go,Web Development,Golang,,,Backend Developer;DevOps Engineer,Compiled backend language known for concurrency and performance.
+spring-boot,Spring Boot,Web Development,Advanced Java,java,,Backend Developer,Production Java backend framework built on Spring.
+flutter,Flutter,Mobile Development,,,,Mobile Developer,Cross-platform mobile UI toolkit using Dart.
+android,Android Development,Mobile Development,,java,,Mobile Developer,Native Android app development.
+ios-swift,iOS Development with Swift,Mobile Development,,,,Mobile Developer,Native iOS app development.
+data-warehousing,Data Warehousing,Data Engineering,Data Warehouse Design,advanced-sql,,Data Engineer,Modeling data for analytical/warehouse workloads (star/snowflake schemas).
+etl,ETL Pipeline Development,Data Engineering,,data-warehousing,,Data Engineer,Extract-transform-load pipeline design and orchestration.
+spark,Apache Spark,Data Engineering,,etl,,Data Engineer,Distributed data processing at scale.
+kafka,Apache Kafka,Data Engineering,,spark,,Data Engineer,Streaming/event-driven data pipelines.
+docker,Docker,DevOps,Containerization,linux,,DevOps Engineer;Cloud Engineer;MLOps Engineer;Backend Developer,Packaging applications into containers.
+kubernetes,Kubernetes,DevOps,K8s;Orchestration,docker,,DevOps Engineer;Cloud Engineer;MLOps Engineer,Orchestrating containers at scale in production.
+cicd,CI/CD Pipelines,DevOps,,docker,,DevOps Engineer;Cloud Engineer,Automated build/test/deploy pipelines.
+devops-practices,DevOps Practices,DevOps,,linux,,DevOps Engineer,"Culture and tooling of DevOps: monitoring, IaC basics, incident response."
+aws-practitioner,AWS Fundamentals,Cloud,AWS Cloud Practitioner,,,Cloud Engineer;DevOps Engineer,Core AWS services and cloud concepts.
+aws-architect,AWS Solutions Architecture,Cloud,AWS Solutions Architect,aws-practitioner,,Cloud Engineer,"Designing resilient, scalable AWS architectures."
+azure,Azure Fundamentals,Cloud,,,,Cloud Engineer,Core Microsoft Azure services and concepts.
+gcp,Google Cloud Platform,Cloud,GCP Basics,,,Cloud Engineer,Core Google Cloud services and concepts.
+cybersecurity-fundamentals,Cybersecurity Fundamentals,Security,,,,Cybersecurity Engineer,"Core security concepts: threats, CIA triad, common attack classes."
+ethical-hacking,Ethical Hacking,Security,Penetration Testing Basics,cybersecurity-fundamentals,,Cybersecurity Engineer,Offensive-security techniques used for authorized vulnerability assessment.
+blockchain-dev,Blockchain Development,Blockchain,,javascript,blockchain-fundamentals,Blockchain Developer,Blockchain fundamentals and building on distributed ledgers.
+solidity,Solidity & Smart Contracts,Blockchain,Smart Contract Programming,blockchain-dev,,Blockchain Developer,Writing and securing Ethereum smart contracts.
+embedded-systems,Embedded Systems,Systems,,cpp,os-fundamentals,Systems Engineer,Programming resource-constrained hardware.
+iot,IoT Development,Systems,IoT with Raspberry Pi,embedded-systems,,Systems Engineer,Connected-device projects on hardware like Raspberry Pi.
+calculus,Calculus for Data Science,Math Foundations,,,,Data Scientist;Machine Learning Engineer,Derivatives/gradients as used in optimization for ML.
+linear-algebra,Linear Algebra for ML,Math Foundations,,,,Data Scientist;Machine Learning Engineer;Deep Learning Engineer,Vectors/matrices underlying ML and deep learning math.
+probability-statistics,Probability & Statistics,Math Foundations,,,,Data Analyst;Data Scientist;Machine Learning Engineer,Core statistical reasoning for data analysis and ML.
+bayesian-statistics,Bayesian Statistics,Math Foundations,,probability-statistics,,Data Scientist,Probabilistic inference and Bayesian modeling.
+hypothesis-testing,Hypothesis Testing,Math Foundations,,probability-statistics,,Data Analyst;Data Scientist,Statistical significance testing for experiments and A/B tests.
+excel,Excel for Data Analysis,Data Analytics,,,,Data Analyst,Spreadsheet-based data analysis fundamentals.
+power-bi,Power BI,Data Analytics,,excel,,Data Analyst,Business dashboarding and reporting with Power BI.
+tableau,Tableau,Data Analytics,,excel,,Data Analyst,Business dashboarding and reporting with Tableau.
+statistical-analysis-r,Statistical Analysis with R,Data Analytics,,probability-statistics,,Data Analyst;Data Scientist,Statistical computing and analysis using R.
+pandas,Pandas,Data Analytics,Data Analysis with Pandas,python,,Data Analyst;Data Scientist;Data Engineer,Tabular data manipulation in Python.
+eda,Exploratory Data Analysis,Data Analytics,EDA,pandas,,Data Analyst;Data Scientist,Systematically investigating a dataset before modeling.
+data-viz-matplotlib,Data Visualization (Matplotlib),Data Analytics,,pandas,,Data Analyst;Data Scientist,Chart-based data visualization in Python.
+python-for-data-science,Python for Data Science,Data Analytics,,pandas,,Data Scientist;Machine Learning Engineer,Applying the Python data stack toward analysis and modeling workflows.
+ml-fundamentals,Machine Learning Fundamentals,Machine Learning,,,linear-algebra;probability-statistics;python-for-data-science,Machine Learning Engineer;Data Scientist,"Core ML concepts: training, evaluation, bias/variance, model families."
+feature-engineering,Feature Engineering,Machine Learning,,ml-fundamentals,,Machine Learning Engineer;Data Scientist,Transforming raw data into model-ready features.
+supervised-learning,Supervised Learning,Machine Learning,,ml-fundamentals,,Machine Learning Engineer;Data Scientist,Classification/regression algorithms trained on labeled data.
+unsupervised-learning,Unsupervised Learning,Machine Learning,,ml-fundamentals,,Machine Learning Engineer;Data Scientist,Clustering and pattern discovery on unlabeled data.
+time-series-analysis,Time Series Analysis,Machine Learning,,supervised-learning,,Machine Learning Engineer;Data Scientist,Forecasting and modeling sequential/temporal data.
+reinforcement-learning,Reinforcement Learning,Machine Learning,,supervised-learning,,Machine Learning Engineer,Learning optimal actions via reward signals.
+dl-tensorflow,Deep Learning with TensorFlow,Deep Learning,,,ml-fundamentals;feature-engineering,Deep Learning Engineer;Machine Learning Engineer,Building neural networks with TensorFlow/Keras.
+dl-pytorch,Deep Learning with PyTorch,Deep Learning,,,ml-fundamentals;feature-engineering,Deep Learning Engineer;Machine Learning Engineer,Building neural networks with PyTorch.
+advanced-neural-networks,Advanced Neural Networks,Deep Learning,,,dl-tensorflow;dl-pytorch,Deep Learning Engineer,"Deeper architectures: CNNs, RNNs, regularization, optimization tricks."
+computer-vision,Computer Vision,Deep Learning,OpenCV,advanced-neural-networks,,Computer Vision Engineer;Deep Learning Engineer,Image/video understanding with deep learning and OpenCV.
+nlp,Natural Language Processing,Deep Learning,NLP,advanced-neural-networks,,NLP Engineer;Deep Learning Engineer;AI/LLM Engineer,Text understanding and generation with deep learning.
+transfer-learning,Transfer Learning & Fine-tuning,Deep Learning,,advanced-neural-networks,,Deep Learning Engineer;NLP Engineer;Computer Vision Engineer;AI/LLM Engineer,Adapting pretrained models to new tasks efficiently.
+generative-ai,Generative AI & Prompt Engineering,Deep Learning,GenAI;LLMs,transfer-learning,,NLP Engineer;Deep Learning Engineer;AI/LLM Engineer,Working with large generative/language models and prompting.
+mlops,MLOps & Model Deployment,MLOps,,,dl-tensorflow;docker,MLOps Engineer;Deep Learning Engineer;Machine Learning Engineer,"Deploying, monitoring, and maintaining ML models in production."
+mlops-orchestration,MLOps Pipeline Orchestration,MLOps,,mlops,cicd,MLOps Engineer,"Automating the train-validate-deploy lifecycle as a managed, repeatable pipeline rather than manual steps."
+app-security,Application Security & Secure Coding,Security,AppSec,ethical-hacking,,Cybersecurity Engineer;Backend Developer,Writing and reviewing code to avoid the vulnerability classes ethical hacking teaches you to exploit.
+cloud-security,Cloud Security Fundamentals,Security,,cybersecurity-fundamentals,aws-practitioner,Cybersecurity Engineer;Cloud Engineer,"Identity, network, and data security specifically in a cloud provider's shared-responsibility model."
+web3-frontend,Web3 Frontend Integration,Blockchain,dApp Frontend,solidity,react,Blockchain Developer;Frontend Developer,"Connecting a web frontend to deployed smart contracts — wallets, signing, and on-chain state in the UI."
+tokenomics,DeFi Protocols & Tokenomics,Blockchain,,solidity,,Blockchain Developer,"How decentralized finance protocols design incentives, liquidity, and token economics."
+os-fundamentals,Operating Systems Fundamentals,Systems,Operating Systems;Operating Systems Fundamentals,,,Systems Engineer;DevOps Engineer,"Processes, memory management, scheduling, and file systems — the foundation embedded and systems work builds on."
+networking-fundamentals,Computer Networking Fundamentals,Systems,,linux,,Systems Engineer;DevOps Engineer;Cybersecurity Engineer,"How data actually moves between machines — protocols, addressing, and troubleshooting connectivity."
+testing-debugging,Testing & Debugging Fundamentals,Developer Tools,,,,Backend Developer;Frontend Developer;Full Stack Developer;DevOps Engineer,"Systematically isolating bugs and writing tests that actually catch regressions, not just happy-path checks."
+clean-code,Code Review & Clean Code Practices,Developer Tools,,git,,Backend Developer;Frontend Developer;Full Stack Developer,"Reading and giving feedback on real code, and writing code that's easy for someone else to review."
+mlops-fundamentals,MLOps Fundamentals,MLOps,,,,MLOps Engineer;Machine Learning Engineer,"Core practices before deployment: experiment tracking, versioning, and reproducibility for ML work."
+ml-pipeline-orchestration,ML Pipeline Orchestration,MLOps,,mlops-fundamentals,docker,MLOps Engineer;Machine Learning Engineer,"Chaining data prep, training, and evaluation into a single automated, repeatable pipeline."
+model-monitoring,Model Monitoring & Observability,MLOps,,mlops,,MLOps Engineer;Machine Learning Engineer;Deep Learning Engineer,Tracking a deployed model's input distribution and prediction quality over time to catch drift before it causes damage.
+advanced-git,Advanced Git Workflows,Developer Tools,,git,,Backend Developer;Frontend Developer;Full Stack Developer;DevOps Engineer;Data Engineer;Machine Learning Engineer;Systems Engineer,"Branching strategies, rebasing, and code-review workflows for working on a real team codebase."
+shell-scripting,Shell Scripting for Automation,Developer Tools,,linux,,DevOps Engineer;Systems Engineer;Backend Developer;Data Engineer,Automating repetitive operational tasks with bash scripts instead of doing them by hand.
+debugging-profiling,Debugging & Profiling Tools,Developer Tools,,shell-scripting,linux,Backend Developer;DevOps Engineer;Systems Engineer,Diagnosing real performance and correctness issues with a debugger and profiler instead of guesswork.
+security-operations,Security Operations & Incident Response,Security,SOC,cybersecurity-fundamentals,,Cybersecurity Engineer,"Detecting, triaging, and responding to security incidents as they happen, the defensive counterpart to ethical hacking."
+advanced-pentesting,Advanced Penetration Testing,Security,Red Teaming,ethical-hacking,,Cybersecurity Engineer,"Structured, scoped offensive-security engagements that go beyond basic vulnerability scanning."
+blockchain-fundamentals,Blockchain & Cryptography Fundamentals,Blockchain,,,,Blockchain Developer,"How hashing, consensus mechanisms, and wallets actually work, before writing any blockchain application code."
+web3-js,Web3 Development with JavaScript,Blockchain,Web3,blockchain-fundamentals,javascript,Blockchain Developer;Full Stack Developer,"Connecting a frontend application to a blockchain — wallets, transactions, and contract calls from client code."
+rtos-programming,Real-Time Operating Systems (RTOS) Programming,Systems,RTOS,embedded-systems,,Systems Engineer,"Programming under hard timing constraints using a real-time OS, where a late response is as wrong as an incorrect one."

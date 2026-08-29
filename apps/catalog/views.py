@@ -128,7 +128,7 @@ def search(request):
                 course_results.append({"course": course, "meta": meta})
 
         for p in load_project_seed():
-            haystack = (p.title + " " + " ".join(p.skills) + " " + p.stage).lower()
+            haystack = (p.title + " " + " ".join(p.skills) + " " + " ".join(p.demonstrated_skill_names)).lower()
             if q_lower in haystack:
                 project_results.append(p)
 
@@ -215,7 +215,8 @@ def project_action(request, slug):
     # the project transitions into completed/published.
     if action in ("complete", "publish") and not was_completed_before:
         from apps.profiles.models import LearnerSkillEvidence
-        for skill in projects[slug].skills:
+        evidence_names = list(projects[slug].skills) + list(projects[slug].demonstrated_skill_names)
+        for skill in dict.fromkeys(evidence_names):
             existing = LearnerSkillEvidence.objects.filter(profile=profile, skill=skill).first()
             if existing and existing.evidence_level == "known":
                 continue  # don't downgrade stronger, self-reported evidence

@@ -1,0 +1,80 @@
+{% extends "app_base.html" %}
+{% block title %}Career Readiness · Sequentia{% endblock %}
+{% block app_content %}
+<div class="space-y-8">
+  <div>
+    <h1 class="font-display text-2xl font-semibold">{{ profile.target_role|default:"Your" }} Readiness</h1>
+    <p class="text-ink-muted text-sm mt-1">How your current path breaks down by domain.</p>
+  </div>
+
+  <div class="card p-6 text-center">
+    <p class="stat text-5xl font-semibold text-ink">{{ readiness }}<span class="text-2xl text-ink-faint">%</span></p>
+    <p class="text-sm text-ink-muted mt-2">Overall career readiness</p>
+  </div>
+
+  <div class="card p-6">
+    <p class="text-sm font-medium mb-4">By domain</p>
+    <div class="space-y-4">
+      {% for d in domains %}
+      <div>
+        <div class="flex justify-between text-sm mb-1.5">
+          <span class="text-ink-muted">{{ d.domain }}</span>
+          <span class="stat text-ink-faint">{{ d.completed }}/{{ d.total }} · {{ d.pct }}%</span>
+        </div>
+        <div class="h-1.5 rounded-full bg-edge overflow-hidden">
+          <div class="h-full bg-system" style="width:{{ d.pct }}%"></div>
+        </div>
+      </div>
+      {% empty %}
+      <p class="text-ink-faint text-sm">No domains in your path yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="grid sm:grid-cols-2 gap-4">
+    {% if strongest %}
+    <div class="card p-5">
+      <p class="text-xs text-verified font-medium mb-1">Your strongest area</p>
+      <p class="font-display text-lg">{{ strongest.domain }}</p>
+      <p class="text-xs text-ink-faint mt-1 stat">{{ strongest.pct }}% complete</p>
+    </div>
+    {% endif %}
+    {% if gap %}
+    <div class="card p-5">
+      <p class="text-xs text-signal font-medium mb-1">Your largest gap</p>
+      <p class="font-display text-lg">{{ gap.domain }}</p>
+      <p class="text-xs text-ink-faint mt-1 stat">{{ gap.pct }}% complete</p>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if next_action %}
+  <div class="card-current p-5">
+    <p class="text-xs font-mono uppercase tracking-widest text-signal mb-2">Recommended next action</p>
+    <p class="font-display text-lg font-semibold">{{ next_action.course }}</p>
+    <a href="{% url 'pathway:path' %}" class="text-sm text-system hover:underline mt-2 inline-block">View in your path →</a>
+  </div>
+  {% endif %}
+
+  <div class="card p-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="font-medium text-sm">Internship Mode</p>
+        <p class="text-xs text-ink-muted mt-1 max-w-sm">
+          When on, courses that feed one of your curated portfolio projects get a slight
+          priority boost among similarly-scored options — it doesn't override your goal fit.
+        </p>
+      </div>
+      <form method="post" action="{% url 'dashboard:toggle_internship_mode' %}">
+        {% csrf_token %}
+        <button type="submit" class="toggle-switch {% if profile.internship_mode %}toggle-on{% endif %}">
+          <span class="toggle-knob"></span>
+        </button>
+      </form>
+    </div>
+    {% if profile.internship_mode %}
+    <p class="text-xs text-signal mt-3">🎯 Internship Mode is on</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

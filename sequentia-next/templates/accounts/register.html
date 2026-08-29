@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Create your account · Sequentia{% endblock %}
+{% block content %}
+<div class="max-w-sm mx-auto bg-panel border border-slate-800 rounded-2xl p-8">
+  <h1 class="text-xl font-semibold mb-1">Create your account</h1>
+  <p class="text-sm text-slate-400 mb-6">Start building your learning path.</p>
+  <form method="post" class="space-y-4">
+    {% csrf_token %}
+    {% for field in form %}
+      <div>
+        <label class="block text-sm text-slate-300 mb-1">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+          <p class="text-xs text-red-400 mt-1">{{ field.errors.0 }}</p>
+        {% endif %}
+        {% if field.help_text %}
+          <p class="text-xs text-slate-500 mt-1">{{ field.help_text|safe }}</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+    <button type="submit"
+      class="w-full py-2 rounded-lg bg-electric hover:bg-blue-600 transition font-medium">
+      Create account
+    </button>
+  </form>
+  <p class="text-sm text-slate-400 mt-4">
+    Already have an account? <a class="text-electric hover:underline" href="{% url 'accounts:login' %}">Log in</a>
+  </p>
+</div>
+{% endblock %}

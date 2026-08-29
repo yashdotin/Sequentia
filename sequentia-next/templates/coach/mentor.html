@@ -1,0 +1,91 @@
+{% extends "app_base.html" %}
+{% block title %}AI Mentor · Sequentia{% endblock %}
+{% block app_content %}
+<div class="max-w-2xl mx-auto flex flex-col" style="height: calc(100vh - 140px);">
+  <div class="mb-4">
+    <h1 class="font-display text-2xl font-semibold flex items-center gap-2">
+      <span id="mentor-companion">{% include "partials/companion.html" with state="ready" %}</span>
+      Sequentia AI
+    </h1>
+    <p class="text-ink-muted text-sm mt-1">Grounded in your actual path — no invented courses, skills, or scores.</p>
+  </div>
+
+  <div id="chat-log" class="flex-1 overflow-y-auto space-y-4 pr-1 pb-4">
+    <div class="chat-bubble chat-bubble-ai">
+      Hey 👋 I know your current path. What do you want to understand?
+    </div>
+  </div>
+
+  <div class="flex flex-wrap gap-2 mb-3">
+    {% for qa in quick_actions %}
+    <button type="button" class="quick-action-chip" data-question="{{ qa.question }}">{{ qa.label }}</button>
+    {% endfor %}
+  </div>
+
+  <form id="mentor-form" class="flex gap-2">
+    {% csrf_token %}
+    <input type="text" id="mentor-input" placeholder="Ask about your path..." class="flex-1 text-sm">
+    <button type="submit" class="btn-primary px-5 py-2.5 text-sm">Ask</button>
+  </form>
+</div>
+
+<script>
+(function () {
+  const log = document.getElementById('chat-log');
+  const form = document.getElementById('mentor-form');
+  const input = document.getElementById('mentor-input');
+  const csrfToken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
+
+  function addBubble(text, who) {
+    const div = document.createElement('div');
+    div.className = 'chat-bubble ' + (who === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai');
+    div.textContent = text;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+    return div;
+  }
+
+  function addTyping() {
+    const div = document.createElement('div');
+    div.className = 'chat-bubble chat-bubble-ai chat-typing';
+    div.innerHTML = '<span></span><span></span><span></span>';
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+    return div;
+  }
+
+  async function ask(question) {
+    addBubble(question, 'user');
+    const typing = addTyping();
+    input.value = '';
+    const companionEl = document.querySelector('#mentor-companion .companion');
+    if (companionEl) companionEl.classList.replace('companion-ready', 'companion-analyzing');
+    try {
+      const res = await fetch("{% url 'coach:ask' %}", {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'question=' + encodeURIComponent(question),
+      });
+      const data = await res.json();
+      typing.remove();
+      addBubble(data.answer, 'ai');
+    } catch (e) {
+      typing.remove();
+      addBubble("Something went wrong reaching Sequentia AI — try again.", 'ai');
+    } finally {
+      if (companionEl) companionEl.classList.replace('companion-analyzing', 'companion-ready');
+    }
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const q = input.value.trim();
+    if (q) ask(q);
+  });
+
+  document.querySelectorAll('.quick-action-chip').forEach((btn) => {
+    btn.addEventListener('click', () => ask(btn.dataset.question));
+  });
+})();
+</script>
+{% endblock %}

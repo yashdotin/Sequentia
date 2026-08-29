@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Log in · Sequentia{% endblock %}
+{% block content %}
+<div class="max-w-sm mx-auto bg-panel border border-slate-800 rounded-2xl p-8">
+  <h1 class="text-xl font-semibold mb-1">Welcome back</h1>
+  <p class="text-sm text-slate-400 mb-6">Log in to continue your path.</p>
+  <form method="post" class="space-y-4">
+    {% csrf_token %}
+    {% for field in form %}
+      <div>
+        <label class="block text-sm text-slate-300 mb-1">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+          <p class="text-xs text-red-400 mt-1">{{ field.errors.0 }}</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+    <button type="submit"
+      class="w-full py-2 rounded-lg bg-electric hover:bg-blue-600 transition font-medium">
+      Log in
+    </button>
+  </form>
+  <p class="text-sm text-slate-400 mt-4">
+    <a class="text-electric hover:underline" href="{% url 'accounts:password_reset' %}">Forgot password?</a>
+  </p>
+  <p class="text-sm text-slate-400 mt-2">
+    No account? <a class="text-electric hover:underline" href="{% url 'accounts:register' %}">Register</a>
+  </p>
+</div>
+{% endblock %}

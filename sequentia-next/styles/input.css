@@ -1,0 +1,483 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4, .font-display {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  ::selection {
+    background: rgba(77, 124, 254, 0.35);
+    color: #f4f6fc;
+  }
+  :focus-visible {
+    outline: 2px solid #4d7cfe;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  input[type="text"], input[type="email"], input[type="password"], textarea, select {
+    width: 100%;
+    background: #0a0e1c;
+    border: 1px solid #232b48;
+    border-radius: 0.65rem;
+    padding: 0.6rem 0.85rem;
+    color: #f4f6fc;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+  input:focus, textarea:focus, select:focus { border-color: #4d7cfe; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* The Thread — signature dotted pulse divider used under page headers
+     and as the active-state indicator throughout the product. */
+  .thread {
+    height: 2px;
+    background-image: repeating-linear-gradient(
+      to right,
+      #4d7cfe 0, #4d7cfe 6px, transparent 6px, transparent 14px
+    );
+    background-size: 200% 100%;
+  }
+  .thread-live {
+    background-image: repeating-linear-gradient(
+      to right,
+      #ff9142 0, #ff9142 6px, transparent 6px, transparent 14px
+    );
+    background-size: 200% 100%;
+    animation: thread-travel 3s linear infinite;
+  }
+  .stat {
+    font-family: 'IBM Plex Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .card {
+    background: #12172a;
+    border: 1px solid #232b48;
+    border-radius: 1.25rem;
+  }
+  .card-current {
+    background: #12172a;
+    border: 1px solid #a85f2b;
+    border-top: 2px solid #ff9142;
+    border-radius: 1.25rem;
+  }
+  .btn-primary {
+    background: #4d7cfe;
+    color: #f4f6fc;
+    border-radius: 0.65rem;
+    font-weight: 600;
+    transition: background-color 0.15s ease, transform 0.15s ease;
+  }
+  .btn-primary:hover {
+    background: #3d68e6;
+  }
+  .btn-primary:active {
+    transform: scale(0.98);
+  }
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid #232b48;
+    color: #f4f6fc;
+    border-radius: 0.65rem;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+  }
+  .btn-secondary:hover {
+    border-color: #4d7cfe;
+    background: rgba(77, 124, 254, 0.08);
+  }
+  .skeleton {
+    background: linear-gradient(90deg, #12172a 25%, #1a2140 37%, #12172a 63%);
+    background-size: 400% 100%;
+    animation: skeleton-loading 1.4s ease infinite;
+    border-radius: 0.75rem;
+  }
+  @keyframes skeleton-loading {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+  }
+
+  /* hero mini-sequence, landing page */
+  .sequence-node {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.5rem 0.15rem;
+  }
+  .sequence-node.current {
+    background: rgba(255, 145, 66, 0.06);
+    border-radius: 0.6rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+  }
+  .sequence-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 9999px;
+    flex-shrink: 0;
+  }
+  .sequence-line {
+    width: 1px;
+    height: 14px;
+    margin-left: 4px;
+    background-image: repeating-linear-gradient(to bottom, #232b48 0, #232b48 3px, transparent 3px, transparent 7px);
+  }
+
+  /* onboarding wizard chip picker */
+  .chip {
+    background: #12172a;
+    border: 1px solid #232b48;
+    color: #8891b3;
+    border-radius: 9999px;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.8rem;
+    text-align: center;
+    transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+  }
+  .chip:hover {
+    border-color: #4d7cfe;
+    color: #f4f6fc;
+  }
+  .chip-active {
+    background: rgba(77, 124, 254, 0.14);
+    border-color: #4d7cfe;
+    color: #f4f6fc;
+  }
+  .chip-block {
+    border-radius: 0.65rem;
+    padding: 0.65rem 0.9rem;
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
+  .shake {
+    animation: shake 0.3s ease;
+    border-color: #ff9142 !important;
+  }
+
+  /* AI path-generation staged loader */
+  .gen-stage {
+    transition: opacity 0.25s ease;
+  }
+  .gen-check {
+    width: 18px;
+    height: 18px;
+    border-radius: 9999px;
+    border: 1.5px solid #232b48;
+    flex-shrink: 0;
+    position: relative;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+  }
+  .gen-check-done {
+    border-color: #35d399;
+    background: #35d399;
+  }
+  .gen-check-done::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 2px;
+    width: 5px;
+    height: 9px;
+    border: solid #0a0e1c;
+    border-width: 0 1.5px 1.5px 0;
+    transform: rotate(45deg);
+  }
+
+  /* interactive roadmap nodes */
+  .roadmap-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.15rem;
+    transition: transform 0.15s ease;
+  }
+  .roadmap-node:hover {
+    transform: translateY(-2px);
+  }
+  .roadmap-dot {
+    width: 40px;
+    height: 40px;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    position: relative;
+    border: 1.5px solid transparent;
+    transition: border-color 0.15s ease;
+  }
+  .roadmap-dot-done {
+    background: rgba(53, 211, 153, 0.12);
+    border-color: rgba(53, 211, 153, 0.4);
+  }
+  .roadmap-dot-current {
+    background: rgba(255, 145, 66, 0.14);
+    border-color: #ff9142;
+  }
+  .roadmap-dot-upcoming {
+    background: rgba(77, 124, 254, 0.1);
+    border-color: rgba(77, 124, 254, 0.35);
+  }
+  .roadmap-dot-locked {
+    background: #1a2140;
+    border-color: #232b48;
+    opacity: 0.7;
+  }
+  .roadmap-node:hover .roadmap-dot {
+    border-color: #4d7cfe;
+  }
+  .roadmap-known-ring {
+    position: absolute;
+    inset: -4px;
+    border-radius: 9999px;
+    border: 1.5px dashed #35d399;
+  }
+
+  /* internship mode toggle */
+  .toggle-switch {
+    width: 44px;
+    height: 24px;
+    border-radius: 9999px;
+    background: #232b48;
+    position: relative;
+    transition: background-color 0.2s ease;
+    flex-shrink: 0;
+  }
+  .toggle-switch.toggle-on {
+    background: #ff9142;
+  }
+  .toggle-knob {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 9999px;
+    background: #f4f6fc;
+    transition: transform 0.2s ease;
+  }
+  .toggle-on .toggle-knob {
+    transform: translateX(20px);
+  }
+
+  /* recommendation feedback */
+  .feedback-btn {
+    flex: 1;
+    font-size: 0.78rem;
+    padding: 0.5rem 0.7rem;
+    border-radius: 0.6rem;
+    border: 1px solid #232b48;
+    color: #8891b3;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+  .feedback-btn:hover {
+    border-color: #4d7cfe;
+    color: #f4f6fc;
+  }
+  .feedback-active-up {
+    border-color: #35d399;
+    color: #35d399;
+    background: rgba(53, 211, 153, 0.08);
+  }
+  .feedback-active-down {
+    border-color: #ff9142;
+    color: #ff9142;
+    background: rgba(255, 145, 66, 0.08);
+  }
+  .reason-chip {
+    display: block;
+    width: 100%;
+    text-align: left;
+    font-size: 0.78rem;
+    padding: 0.45rem 0.7rem;
+    border-radius: 0.5rem;
+    color: #8891b3;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+  .reason-chip:hover {
+    background: #1a2140;
+    color: #f4f6fc;
+  }
+
+  /* AI mentor chat */
+  .chat-bubble {
+    max-width: 85%;
+    padding: 0.7rem 1rem;
+    border-radius: 1rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  .chat-bubble-ai {
+    background: #12172a;
+    border: 1px solid #232b48;
+    color: #f4f6fc;
+    border-bottom-left-radius: 0.3rem;
+  }
+  .chat-bubble-user {
+    background: rgba(77, 124, 254, 0.15);
+    border: 1px solid rgba(77, 124, 254, 0.3);
+    color: #f4f6fc;
+    margin-left: auto;
+    border-bottom-right-radius: 0.3rem;
+  }
+  .chat-typing {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 0.9rem 1rem;
+  }
+  .chat-typing span {
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: #5c6488;
+    animation: chat-typing-bounce 1.2s infinite ease-in-out;
+  }
+  .chat-typing span:nth-child(2) { animation-delay: 0.15s; }
+  .chat-typing span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes chat-typing-bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+    30% { transform: translateY(-4px); opacity: 1; }
+  }
+  .quick-action-chip {
+    font-size: 0.78rem;
+    padding: 0.45rem 0.8rem;
+    border-radius: 9999px;
+    border: 1px solid #232b48;
+    color: #8891b3;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+  .quick-action-chip:hover {
+    border-color: #4d7cfe;
+    color: #f4f6fc;
+  }
+
+  /* save toggle */
+  .save-star {
+    font-size: 1.5rem;
+    line-height: 1;
+    color: #5c6488;
+    transition: color 0.15s ease, transform 0.15s ease;
+    padding: 0.25rem;
+  }
+  .save-star:hover {
+    color: #ff9142;
+    transform: scale(1.1);
+  }
+  .save-star-active {
+    color: #ff9142;
+  }
+
+  /* toast notifications */
+  .toast {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: #12172a;
+    border: 1px solid #232b48;
+    border-left: 2px solid #35d399;
+    border-radius: 0.75rem;
+    padding: 0.75rem 0.9rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+  .toast-in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .toast-out {
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .toast-error { border-left-color: #ff9142; }
+  .toast-warning { border-left-color: #f2c14e; }
+  .toast-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    background: #35d399;
+    flex-shrink: 0;
+  }
+  .toast-error .toast-dot { background: #ff9142; }
+  .toast-warning .toast-dot { background: #f2c14e; }
+  .toast-close {
+    color: #5c6488;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0.2rem;
+    flex-shrink: 0;
+  }
+  .toast-close:hover { color: #f4f6fc; }
+
+  /* Sequentia Companion — abstract pulse-orb, not a cartoon character.
+     States: ready (calm), analyzing (spinning ring), celebrate (one-shot burst). */
+  .companion {
+    position: relative;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+  }
+  .companion-core {
+    position: absolute;
+    inset: 10px;
+    border-radius: 9999px;
+    background: #ff9142;
+  }
+  .companion-ring {
+    position: absolute;
+    inset: 3px;
+    border-radius: 9999px;
+    border: 1.5px solid rgba(255, 145, 66, 0.35);
+  }
+  .companion-ready .companion-core { animation: pulse-thread 2.6s ease-in-out infinite; }
+  .companion-ready .companion-ring { animation: companion-breathe 2.6s ease-in-out infinite; }
+
+  .companion-analyzing .companion-core { background: #4d7cfe; }
+  .companion-analyzing .companion-ring {
+    border-color: transparent;
+    border-top-color: #4d7cfe;
+    animation: companion-spin 0.9s linear infinite;
+  }
+
+  .companion-celebrate .companion-core { background: #35d399; }
+  .companion-celebrate .companion-ring {
+    border-color: #35d399;
+    animation: companion-burst 0.7s ease-out;
+  }
+
+  @keyframes companion-breathe {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.15); opacity: 0.2; }
+  }
+  @keyframes companion-spin {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes companion-burst {
+    0% { transform: scale(0.6); opacity: 1; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+}

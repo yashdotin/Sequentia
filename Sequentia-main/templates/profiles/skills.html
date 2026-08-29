@@ -1,0 +1,92 @@
+{% extends "app_base.html" %}
+{% block title %}Skills · Sequentia{% endblock %}
+{% block app_content %}
+<div class="space-y-6">
+  <div class="flex items-center justify-between flex-wrap gap-3">
+    <div>
+      <h1 class="font-display text-2xl font-semibold">Skills</h1>
+      <p class="text-ink-muted text-sm mt-1">Why your path looks the way it does — evidence, relevance, and gap for each area.</p>
+    </div>
+    <a href="{% url 'catalog:saved_resources' %}" class="text-sm text-system hover:underline">★ Saved resources</a>
+  </div>
+
+  <div class="card p-5">
+    <p class="text-sm font-medium mb-1">Interests</p>
+    <p class="text-xs text-ink-muted mb-3">Secondary signal — nudges optional resources and projects, never overrides your primary goal.</p>
+    <div class="flex flex-wrap gap-2 mb-4">
+      {% for interest in current_interests %}
+      <form method="post" action="{% url 'profiles:update_interests' %}" class="inline">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="remove">
+        <input type="hidden" name="interest" value="{{ interest }}">
+        <button type="submit" class="chip chip-active" title="Remove">{{ interest }} &times;</button>
+      </form>
+      {% empty %}
+      <p class="text-ink-faint text-sm">No interests recorded yet.</p>
+      {% endfor %}
+    </div>
+    <form method="post" action="{% url 'profiles:update_interests' %}" class="flex gap-2">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add">
+      <select name="interest" class="flex-1 text-sm">
+        <option value="">Add an interest...</option>
+        {% for opt in domain_options %}<option value="{{ opt }}">{{ opt }}</option>{% endfor %}
+      </select>
+      <button type="submit" class="btn-primary px-4 py-2 text-sm">Add</button>
+    </form>
+  </div>
+
+  <div class="card p-5">
+    <p class="text-sm font-medium mb-1">Known skills</p>
+    <p class="text-xs text-ink-muted mb-3">Self-reported — updating this recalculates your path immediately.</p>
+    <div class="flex flex-wrap gap-2 mb-4">
+      {% for skill in known_skills %}
+      <form method="post" action="{% url 'profiles:update_skills' %}" class="inline">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="remove">
+        <input type="hidden" name="skill" value="{{ skill }}">
+        <button type="submit" class="chip chip-active" title="Remove">{{ skill }} &times;</button>
+      </form>
+      {% empty %}
+      <p class="text-ink-faint text-sm">No known skills recorded yet.</p>
+      {% endfor %}
+    </div>
+    <form method="post" action="{% url 'profiles:update_skills' %}" class="flex gap-2">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add">
+      <input type="text" name="skill" list="skill-catalog-options" placeholder="Add a known skill..." class="flex-1 text-sm">
+      <datalist id="skill-catalog-options">
+        {% for opt in skill_options %}<option value="{{ opt }}">{% endfor %}
+      </datalist>
+      <button type="submit" class="btn-primary px-4 py-2 text-sm">Add</button>
+    </form>
+  </div>
+
+  <div class="card overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-void/60 text-ink-faint text-left">
+        <tr>
+          <th class="px-4 py-3 font-medium">Skill</th>
+          <th class="px-4 py-3 font-medium">Domain</th>
+          <th class="px-4 py-3 font-medium">Evidence</th>
+          <th class="px-4 py-3 font-medium">Target relevance</th>
+          <th class="px-4 py-3 font-medium">Gap</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-edge">
+        {% for row in rows %}
+        <tr class="hover:bg-surface/50 transition">
+          <td class="px-4 py-3">
+            <a href="{% url 'catalog:resource_detail' row.course|slugify %}" class="hover:text-system">{{ row.course }}</a>
+          </td>
+          <td class="px-4 py-3 text-ink-muted">{{ row.domain }}</td>
+          <td class="px-4 py-3 text-ink-muted">{{ row.evidence }}</td>
+          <td class="px-4 py-3 text-ink-muted">{{ row.target_relevance }}</td>
+          <td class="px-4 py-3 text-ink-muted">{{ row.gap }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

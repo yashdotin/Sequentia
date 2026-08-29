@@ -1,0 +1,25 @@
+{% if messages %}
+<div id="toast-stack" class="fixed bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 md:left-auto md:right-6 md:translate-x-0 z-[60] flex flex-col gap-2 w-[calc(100%-2rem)] max-w-sm">
+  {% for message in messages %}
+  <div class="toast {% if message.tags == 'error' %}toast-error{% elif message.tags == 'warning' %}toast-warning{% else %}toast-success{% endif %}">
+    {% if 'celebrate' in message.extra_tags %}
+      {% include "partials/companion.html" with state="celebrate" %}
+    {% else %}
+      <span class="toast-dot"></span>
+    {% endif %}
+    <span class="text-sm flex-1">{{ message }}</span>
+    <button type="button" class="toast-close" aria-label="Dismiss">&times;</button>
+  </div>
+  {% endfor %}
+</div>
+<script>
+(function () {
+  document.querySelectorAll('#toast-stack .toast').forEach((el, i) => {
+    setTimeout(() => el.classList.add('toast-in'), 20 + i * 60);
+    const remove = () => { el.classList.add('toast-out'); setTimeout(() => el.remove(), 250); };
+    const timer = setTimeout(remove, 4500);
+    el.querySelector('.toast-close').addEventListener('click', () => { clearTimeout(timer); remove(); });
+  });
+})();
+</script>
+{% endif %}

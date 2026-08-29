@@ -1,0 +1,107 @@
+{% extends "app_base.html" %}
+{% block title %}Path History · Sequentia{% endblock %}
+{% block app_content %}
+<div class="space-y-8">
+  <div>
+    <h1 class="font-display text-2xl font-semibold">Path history</h1>
+    <p class="text-ink-muted text-sm mt-1">What changed and why, every time your path was recalculated.</p>
+  </div>
+
+  {% if all_versions|length > 1 %}
+  <div class="card p-6">
+    <p class="text-sm font-medium mb-3">Compare versions</p>
+    <form method="get" class="flex flex-wrap items-center gap-3">
+      <select name="from" class="w-auto">
+        {% for v in all_versions %}
+        <option value="{{ v }}" {% if from_v == v|stringformat:"s" %}selected{% endif %}>Version {{ v }}</option>
+        {% endfor %}
+      </select>
+      <span class="text-ink-faint text-sm">vs</span>
+      <select name="to" class="w-auto">
+        {% for v in all_versions %}
+        <option value="{{ v }}" {% if to_v == v|stringformat:"s" %}selected{% endif %}>Version {{ v }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn-primary px-4 py-2 text-sm">Compare</button>
+    </form>
+
+    {% if comparison %}
+    <div class="mt-5 pt-5 border-t border-edge">
+      <p class="text-xs text-ink-faint mb-3 stat">V{{ comparison.from_path.version }} → V{{ comparison.to_path.version }}</p>
+      <div class="grid sm:grid-cols-3 gap-4">
+        <div>
+          <p class="text-xs text-verified mb-1.5">+ Added</p>
+          <ul class="text-sm space-y-1 text-ink-muted">
+            {% for c in comparison.added %}<li>{{ c }}</li>{% endfor %}
+            {% if not comparison.added %}<li class="text-ink-faint">None</li>{% endif %}
+          </ul>
+        </div>
+        <div>
+          <p class="text-xs text-signal mb-1.5">− Removed</p>
+          <ul class="text-sm space-y-1 text-ink-muted">
+            {% for c in comparison.removed %}<li>{{ c }}</li>{% endfor %}
+            {% if not comparison.removed %}<li class="text-ink-faint">None</li>{% endif %}
+          </ul>
+        </div>
+        <div>
+          <p class="text-xs text-system mb-1.5">↕ Moved stage</p>
+          <ul class="text-sm space-y-1 text-ink-muted">
+            {% for c in comparison.changed_stage %}<li>{{ c.course }} <span class="text-ink-faint">({{ c.from_stage }} → {{ c.to_stage }})</span></li>{% endfor %}
+            {% if not comparison.changed_stage %}<li class="text-ink-faint">None</li>{% endif %}
+          </ul>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  
+  <div class="relative">
+    {% for entry in paths %}
+    <div class="flex gap-4 pb-8 {% if not forloop.last %}relative{% endif %}">
+      {% if not forloop.last %}
+      <div class="absolute left-[15px] top-8 bottom-0 w-px" style="background-image: repeating-linear-gradient(to bottom, #232b48 0, #232b48 3px, transparent 3px, transparent 7px);"></div>
+      {% endif %}
+      <div class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs z-10
+        {% if entry.path.is_current %}bg-signal/15 border border-signal text-signal{% else %}bg-surface-2 border border-edge text-ink-faint{% endif %}">
+        {% if entry.path.is_current %}●{% else %}○{% endif %}
+      </div>
+      <div class="flex-1 card p-5 {% if entry.path.is_current %}border-signal-dim{% endif %}">
+        <div class="flex items-center justify-between mb-1">
+          <p class="font-medium text-sm">
+            Version {{ entry.path.version }}
+            {% if entry.path.is_current %}<span class="text-xs text-signal ml-1.5">Current</span>{% endif %}
+          </p>
+          <p class="text-xs text-ink-faint stat">{{ entry.path.created_at|date:"M j, Y, g:i A" }}</p>
+        </div>
+        <p class="text-sm text-ink-muted mt-2">{{ entry.path.change_reason }}</p>
+
+        {% if entry.added or entry.removed %}
+        <div class="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-edge">
+          {% if entry.added %}
+          <div>
+            <p class="text-xs text-verified mb-1.5">+ Added</p>
+            <ul class="text-sm space-y-1 text-ink-muted">
+              {% for c in entry.added %}<li>{{ c }}</li>{% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+          {% if entry.removed %}
+          <div>
+            <p class="text-xs text-signal mb-1.5">− Removed</p>
+            <ul class="text-sm space-y-1 text-ink-muted">
+              {% for c in entry.removed %}<li>{{ c }}</li>{% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% empty %}
+    <p class="text-ink-faint text-sm">No path history yet.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

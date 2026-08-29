@@ -1,0 +1,102 @@
+course,domain,difficulty,resource_type,prerequisites,canonical_skill_ids
+Python for Absolute Beginners,Programming Foundations,Beginner,course,,python
+HTML and CSS for Beginners,Web Development,Beginner,course,,html-css
+JavaScript Fundamentals,Web Development,Beginner,course,HTML and CSS for Beginners,javascript
+Java Programming Basics,Programming Foundations,Beginner,course,,java
+C Plus Plus Programming Essentials,Programming Foundations,Beginner,course,,cpp
+SQL for Beginners,Databases,Beginner,course,,sql
+Git and GitHub Mastery,Developer Tools,Beginner,course,,git
+Linux Command Line Essentials,Developer Tools,Beginner,course,,linux
+Excel for Data Analysis,Data Analytics,Beginner,course,,excel
+Python OOP Concepts,Programming Foundations,Beginner,course,Python for Absolute Beginners,python
+Python Programming Masterclass,Programming Foundations,Intermediate,course,Python OOP Concepts,python
+Python Automation and Scripting,Programming Foundations,Intermediate,course,Python OOP Concepts,python-automation
+Advanced Python Development,Programming Foundations,Advanced,course,Python Programming Masterclass,python
+Modern JavaScript ES6 Plus,Web Development,Intermediate,course,JavaScript Fundamentals,async-javascript
+TypeScript for Developers,Web Development,Intermediate,course,Modern JavaScript ES6 Plus,typescript
+Responsive Web Design,Web Development,Beginner,course,HTML and CSS for Beginners,responsive-design
+React.js Development,Web Development,Intermediate,course,Modern JavaScript ES6 Plus,react
+Angular Framework Essentials,Web Development,Intermediate,course,Modern JavaScript ES6 Plus,angular
+Vue.js for Beginners,Web Development,Intermediate,course,Modern JavaScript ES6 Plus,vue
+React Native Mobile Development,Mobile Development,Intermediate,course,React.js Development,react-native
+Flutter Cross Platform Apps,Mobile Development,Intermediate,course,Python for Absolute Beginners,flutter
+Android App Development,Mobile Development,Intermediate,course,Java Programming Basics,android
+iOS App Development with Swift,Mobile Development,Intermediate,course,,ios-swift
+Node.js Backend Development,Web Development,Intermediate,course,Modern JavaScript ES6 Plus,node
+JavaScript Full Stack Development,Web Development,Advanced,course,Node.js Backend Development,"node,rest-apis"
+Django Web Framework,Web Development,Intermediate,course,Python OOP Concepts,django
+Flask API Development,Web Development,Intermediate,course,Python OOP Concepts,flask
+REST API Design Principles,Web Development,Intermediate,course,,rest-apis
+GraphQL API Development,Web Development,Intermediate,course,REST API Design Principles,graphql
+Go Language for Backend,Web Development,Intermediate,course,,golang
+MongoDB for Developers,Databases,Intermediate,course,SQL for Beginners,mongodb
+PostgreSQL Database Design,Databases,Intermediate,course,SQL for Beginners,postgresql
+Advanced SQL and Query Optimization,Databases,Advanced,course,PostgreSQL Database Design,advanced-sql
+Database Performance Tuning,Databases,Advanced,course,Advanced SQL and Query Optimization,db-performance
+Redis Caching Strategies,Databases,Intermediate,course,PostgreSQL Database Design,redis
+Data Warehouse Design,Data Engineering,Advanced,course,Advanced SQL and Query Optimization,data-warehousing
+ETL Pipeline Development,Data Engineering,Advanced,course,Data Warehouse Design,etl
+Data Engineering with Apache Spark,Data Engineering,Advanced,course,ETL Pipeline Development,spark
+Apache Kafka for Real-time Data,Data Engineering,Advanced,course,Data Engineering with Apache Spark,kafka
+Docker and Containerization,DevOps,Intermediate,course,Linux Command Line Essentials,docker
+Kubernetes Orchestration,DevOps,Advanced,course,Docker and Containerization,kubernetes
+CI CD Pipeline Setup,DevOps,Advanced,course,Docker and Containerization,cicd
+DevOps Practices and Tools,DevOps,Intermediate,course,Linux Command Line Essentials,devops-practices
+AWS Cloud Practitioner,Cloud,Beginner,course,,aws-practitioner
+AWS Solutions Architect,Cloud,Advanced,course,AWS Cloud Practitioner,aws-architect
+Azure Fundamentals,Cloud,Beginner,course,,azure
+Google Cloud Platform Basics,Cloud,Beginner,course,,gcp
+Cybersecurity Fundamentals,Security,Beginner,course,,cybersecurity-fundamentals
+Ethical Hacking Basics,Security,Intermediate,course,Cybersecurity Fundamentals,ethical-hacking
+Blockchain Development,Blockchain,Advanced,course,JavaScript Fundamentals,blockchain-dev
+Smart Contract Programming with Solidity,Blockchain,Advanced,course,Blockchain Development,solidity
+Embedded Systems Programming,Systems,Intermediate,course,C Plus Plus Programming Essentials,embedded-systems
+IoT with Raspberry Pi,Systems,Intermediate,course,Embedded Systems Programming,iot
+Calculus for Data Science,Math Foundations,Beginner,course,,calculus
+Linear Algebra for Machine Learning,Math Foundations,Beginner,course,,linear-algebra
+Probability and Statistics,Math Foundations,Beginner,course,,probability-statistics
+Bayesian Statistics,Math Foundations,Advanced,course,Probability and Statistics,bayesian-statistics
+Hypothesis Testing in Practice,Math Foundations,Intermediate,course,Probability and Statistics,hypothesis-testing
+Statistical Analysis with R,Data Analytics,Intermediate,course,Probability and Statistics,statistical-analysis-r
+Data Analysis with Pandas,Data Analytics,Beginner,course,Python for Absolute Beginners,pandas
+Exploratory Data Analysis,Data Analytics,Intermediate,course,Data Analysis with Pandas,eda
+Data Visualization with Matplotlib,Data Analytics,Intermediate,course,Data Analysis with Pandas,data-viz-matplotlib
+Power BI Dashboard Creation,Data Analytics,Beginner,course,Excel for Data Analysis,power-bi
+Tableau for Business Analytics,Data Analytics,Beginner,course,Excel for Data Analysis,tableau
+Python for Data Science,Data Analytics,Intermediate,course,Data Analysis with Pandas,python-for-data-science
+Machine Learning Fundamentals,Machine Learning,Intermediate,course,"Linear Algebra for Machine Learning,Probability and Statistics,Python for Data Science",ml-fundamentals
+Feature Engineering for ML,Machine Learning,Intermediate,course,Machine Learning Fundamentals,feature-engineering
+Supervised Learning Algorithms,Machine Learning,Intermediate,course,Machine Learning Fundamentals,supervised-learning
+Unsupervised Learning Techniques,Machine Learning,Intermediate,course,Machine Learning Fundamentals,unsupervised-learning
+Time Series Analysis,Machine Learning,Advanced,course,Supervised Learning Algorithms,time-series-analysis
+Reinforcement Learning Basics,Machine Learning,Advanced,course,Supervised Learning Algorithms,reinforcement-learning
+Deep Learning with TensorFlow,Deep Learning,Advanced,course,"Machine Learning Fundamentals,Feature Engineering for ML",dl-tensorflow
+Deep Learning with PyTorch,Deep Learning,Advanced,course,"Machine Learning Fundamentals,Feature Engineering for ML",dl-pytorch
+Advanced Neural Networks,Deep Learning,Advanced,course,"Deep Learning with TensorFlow,Deep Learning with PyTorch",advanced-neural-networks
+Computer Vision with OpenCV,Deep Learning,Advanced,course,Advanced Neural Networks,computer-vision
+Natural Language Processing,Deep Learning,Advanced,course,Advanced Neural Networks,nlp
+Transfer Learning and Fine-tuning,Deep Learning,Advanced,course,Advanced Neural Networks,transfer-learning
+Generative AI and Prompt Engineering,Deep Learning,Advanced,course,Transfer Learning and Fine-tuning,generative-ai
+MLOps and Model Deployment,MLOps,Advanced,course,"Deep Learning with TensorFlow,Docker and Containerization",mlops
+Advanced Java and Spring Boot,Web Development,Advanced,course,Java Programming Basics,spring-boot
+MLOps Pipeline Orchestration with CI/CD,MLOps,Advanced,course,"MLOps and Model Deployment,CI CD Pipeline Setup",mlops-orchestration
+Application Security and Secure Coding,Security,Intermediate,course,Ethical Hacking Basics,app-security
+Cloud Security Fundamentals,Security,Advanced,course,"Cybersecurity Fundamentals,AWS Cloud Practitioner",cloud-security
+Web3 Frontend Integration,Blockchain,Intermediate,course,"Smart Contract Programming with Solidity,React.js Development",web3-frontend
+DeFi Protocols and Tokenomics,Blockchain,Advanced,course,Smart Contract Programming with Solidity,tokenomics
+Operating Systems Fundamentals,Systems,Intermediate,course,C Plus Plus Programming Essentials,os-fundamentals
+Computer Networking Fundamentals,Systems,Beginner,course,Linux Command Line Essentials,networking-fundamentals
+Testing and Debugging Fundamentals,Developer Tools,Beginner,course,,testing-debugging
+Code Review and Clean Code Practices,Developer Tools,Beginner,course,Git and GitHub Mastery,clean-code
+Introduction to MLOps Practices,MLOps,Beginner,course,,mlops-fundamentals
+ML Pipeline Orchestration,MLOps,Intermediate,course,"Introduction to MLOps Practices,Docker and Containerization",ml-pipeline-orchestration
+Model Monitoring and Observability,MLOps,Advanced,course,MLOps and Model Deployment,model-monitoring
+Advanced Git Workflows and Collaboration,Developer Tools,Intermediate,course,Git and GitHub Mastery,advanced-git
+Shell Scripting for Automation,Developer Tools,Intermediate,course,Linux Command Line Essentials,shell-scripting
+Debugging and Profiling Tools,Developer Tools,Advanced,course,Shell Scripting for Automation,debugging-profiling
+Security Operations and Incident Response,Security,Intermediate,course,Cybersecurity Fundamentals,security-operations
+Advanced Penetration Testing,Security,Advanced,course,Ethical Hacking Basics,advanced-pentesting
+Blockchain and Cryptography Fundamentals,Blockchain,Beginner,course,,blockchain-fundamentals
+Web3 Development with JavaScript,Blockchain,Intermediate,course,"Blockchain and Cryptography Fundamentals,JavaScript Fundamentals",web3-js
+Computer Systems and OS Fundamentals,Systems,Beginner,course,,os-fundamentals
+Real-Time Operating Systems Programming,Systems,Advanced,course,Embedded Systems Programming,rtos-programming
