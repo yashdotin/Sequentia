@@ -25,7 +25,6 @@ def _owned_profile_or_none(request):
 
 
 def _unlocks_map(metadata):
-    """course -> list of courses that list it as a prerequisite. Inverted once per request."""
     unlocks = {}
     for course, meta in metadata.items():
         for prereq in meta.prerequisites:
@@ -200,7 +199,7 @@ def history(request):
     paths = list(profile.paths.prefetch_related("items").order_by("-version"))
     events = list(PathChangeEvent.objects.filter(profile=profile))
 
-    # Build a simple added/removed diff between each version and the one before it.
+
     enriched = []
     for i, path in enumerate(paths):
         courses_now = {item.course for item in path.items.all()}
@@ -248,11 +247,6 @@ def history(request):
 
 @login_required
 def diagnostics(request):
-    """
-    Backend diagnostic view (spec §45) — not part of the redesigned UI,
-    a plain JSON dump for debugging why a path looks the way it does.
-    Own-profile-only: no learner can inspect another's diagnostics.
-    """
     profile = _owned_profile_or_none(request)
     if not profile:
         return JsonResponse({"error": "No profile yet."}, status=400)
@@ -281,7 +275,7 @@ def diagnostics(request):
             "reason": item.reason,
         })
 
-    # Everything the catalog has that did NOT make it into this path, with why.
+
     included_courses = {i.course for i in items}
     rejected = []
     for course, meta in metadata.items():

@@ -122,9 +122,6 @@ class DomainDetectionTests(TestCase):
 
 
 class DomainContaminationTests(TestCase):
-    """Mandatory per spec: a Web Development goal must not produce a path
-    containing Machine Learning / Deep Learning courses, and vice versa,
-    unless the learner explicitly said they're interested in that domain."""
 
     def test_web_development_path_excludes_ml_and_deep_learning(self):
         _, profile = _make_profile("webdev2", "I want to become a full stack web developer")
@@ -159,16 +156,13 @@ class DomainContaminationTests(TestCase):
             self.assertNotIn(domain, excluded, f'"{item.course}" (domain={domain}) is out of place in an ML path')
 
     def test_explicit_interest_overrides_domain_exclusion(self):
-        """A Web Dev learner who explicitly says they're also interested in
-        Machine Learning should be allowed ML courses — the filter narrows
-        by default, it doesn't hard-block an explicit choice."""
         _, profile = _make_profile("webdev3", "I want to become a full stack web developer")
         LearnerInterest.objects.create(profile=profile, label="Machine Learning")
         path = generate_path(profile, "full stack web developer machine learning", reason="Initial")
         metadata = load_course_metadata()
         domains_present = {metadata[i.course].domain for i in path.items.all()}
-        # Not asserting ML *must* appear (still score-dependent), only that
-        # it's not structurally forbidden the way it would be without the interest.
+
+
         self.assertNotIn("Deep Learning", domains_present.difference({"Machine Learning"}))
 
 
@@ -188,9 +182,6 @@ class PathValidatorTests(TestCase):
             self.assertTrue(result.ok, f"{username}: {result.errors}")
 
     def test_prerequisite_violation_is_actually_detectable(self):
-        """Sanity-check the validator itself: manually break a path and
-        confirm validate_prerequisites actually catches it, rather than
-        the positive tests above passing vacuously."""
         _, profile = _make_profile("valbreak", "I want to become a machine learning engineer")
         path = generate_path(profile, "machine learning", reason="Initial")
         metadata = load_course_metadata()
@@ -267,12 +258,6 @@ class ProgressCalculationTests(TestCase):
 
 
 class InvalidPathNeverBecomesCurrentTests(TestCase):
-    """Spec-mandated: 'do not merely log invalid paths and continue as if
-    they were valid' — an invalid generation must roll back to the previous
-    current version rather than replacing it. Eligibility gating makes a
-    genuinely invalid generation near-impossible in normal operation, so
-    this test forces the failure path directly to exercise the rollback
-    logic itself."""
 
     def test_rollback_preserves_previous_valid_path_as_current(self):
         from unittest.mock import patch

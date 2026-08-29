@@ -1,20 +1,3 @@
-"""
-Extracts structured signals from a learner's free-text onboarding message.
-
-No external LLM. Uses spaCy's dependency parser to find, per sentence, who's
-doing what to which noun phrase — "I already know X" vs "I'm interested in Y"
-vs "I want to become a Z" get handled as different intents, not one regex.
-Noun-chunk candidates are then grounded against real course/domain vocabulary
-via the domain-trained Word2Vec similarity (phrase_similarity.py) rather than
-a hardcoded keyword list — a phrasing like "I love container orchestration"
-now maps to Cloud/DevOps even though no keyword dict entry says so, because
-the model learned kubernetes/docker/orchestration cluster together from the
-review corpus itself.
-
-Confidence discipline unchanged from the regex version: exact course-name
-matches under a "known" cue → "known". Everything else the parser/similarity
-matcher finds → "inferred". Nothing becomes "known" from a fuzzy match.
-"""
 
 from __future__ import annotations
 
@@ -49,21 +32,9 @@ class ExtractionResult:
 
 
 def _sentence_intent(sent) -> str | None:
-    """
-    Returns 'known' or 'interest' if any token in the sentence carries that
-    lemma — scanning the whole sentence rather than just the syntactic ROOT,
-    since intent verbs often show up as a conjunct ("know X and want Y") or
-    an adjectival complement ("I'm interested in X", where ROOT is the copula
-    "be" and "interested" is its acomp child, not the ROOT itself).
-
-    A token negated via spaCy's `neg` dependency ("don't know", "not
-    interested") is excluded — otherwise "I don't know React" would be read
-    as known-skill evidence, the opposite of what was said.
-    """
     def _is_negated(token) -> bool:
-        # neg usually attaches to the token itself ("don't know"), but for
-        # copula constructions ("I'm not interested") it attaches to the
-        # copula ("'m") that governs the adjective, not the adjective itself.
+
+
         own_neg = any(child.dep_ == "neg" for child in token.children)
         head_neg = any(child.dep_ == "neg" for child in token.head.children)
         return own_neg or head_neg
@@ -117,21 +88,15 @@ def extract_from_text(text: str) -> ExtractionResult:
         sent_simplified = re.sub(r"[^a-z0-9 ]", "", sent.text.lower())
 
         if intent == "known":
-            # Exact course-name mention detection uses whole-sentence substring
-            # matching, not noun-chunk boundaries — spaCy's chunker splits
-            # multi-word course names at prepositions ("SQL for Beginners" ->
-            # "SQL" + "Beginners" as separate chunks), which would otherwise
-            # miss the exact match. This is the one place precision matters
-            # more than generalization: "known" is the highest-confidence tag.
+
+
             for course in course_names:
                 simplified_course = re.sub(r"[^a-z0-9 ]", "", course.lower())
                 if simplified_course and simplified_course in sent_simplified:
                     known.add(course)
             continue
 
-        # intent == "interest": ground each noun-chunk candidate against real
-        # domain vocabulary via Word2Vec similarity, so phrasing that doesn't
-        # match any hardcoded keyword can still land on the right domain.
+
         for chunk in _candidate_chunks(sent):
             domain_match = best_label_match(chunk, domain_labels)
             if domain_match:

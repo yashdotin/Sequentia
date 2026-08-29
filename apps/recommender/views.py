@@ -15,7 +15,7 @@ def submit_feedback(request, recommendation_id):
     if not profile:
         raise Http404()
 
-    # Ownership check via request.user's own profile — never trust the ID alone.
+
     try:
         recommendation = Recommendation.objects.get(id=recommendation_id, profile=profile)
     except Recommendation.DoesNotExist:

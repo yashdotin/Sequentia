@@ -3,10 +3,6 @@ from django.db import models
 
 
 class LearnerProjectState(models.Model):
-    """
-    Tracks a learner's progress on a curated project (see data/project_seed.csv,
-    hand-curated the same way course_metadata_seed.csv is — not ML-generated).
-    """
 
     STATUS_CHOICES = [
         ("in_progress", "In progress"),

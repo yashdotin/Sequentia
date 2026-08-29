@@ -18,8 +18,8 @@ class ExtractionTests(TestCase):
         self.assertIn("Python for Absolute Beginners", result.known_skills)
 
     def test_interest_phrase_without_exact_keyword_still_matches_domain(self):
-        # No hardcoded keyword for this phrasing — must come from the
-        # Word2Vec similarity match, not a lookup table.
+
+
         result = extract_from_text("I love container orchestration and deployment automation.")
         self.assertEqual(result.known_skills, [])
         self.assertIn("DevOps", result.inferred_interests)
@@ -207,7 +207,7 @@ class InterestUpdateTests(TestCase):
     def test_interest_update_requires_authentication(self):
         LearnerProfile.objects.all().delete()
         resp = self.client.post(reverse("profiles:update_interests"), {"action": "add", "interest": "Cloud"})
-        self.assertNotEqual(resp.status_code, 200)  # redirected to login, never processed
+        self.assertNotEqual(resp.status_code, 200)
 
     def test_interest_change_triggers_regeneration_with_correct_version_history(self):
         profile = self._login()
@@ -220,8 +220,6 @@ class InterestUpdateTests(TestCase):
 
 
 class InterestDoesNotOverrideGoalTests(TestCase):
-    """Mandatory per spec: interest is secondary personalization, it must
-    never replace the primary goal/domain."""
 
     def test_frontend_goal_with_ml_interest_still_has_web_dev_as_primary(self):
         User.objects.filter(username="frontendml").delete()
@@ -243,7 +241,6 @@ class InterestDoesNotOverrideGoalTests(TestCase):
         current_and_upcoming_domains = {
             metadata[i.course].domain for i in path.items.filter(status__in=("current", "upcoming"))
         }
-        # ML is allowed to appear now (explicit interest override, same as
-        # path_engine's own allowance) but must not be the ONLY or dominant
-        # domain — Web Development must still be present and primary.
+
+
         self.assertIn("Web Development", current_and_upcoming_domains)

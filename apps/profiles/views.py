@@ -39,13 +39,6 @@ def _apply_extraction(profile: LearnerProfile) -> None:
 
 
 def _apply_picked_skills_and_interests(profile: LearnerProfile, known_skills: str, interests: str) -> None:
-    """
-    Skills/interests the learner explicitly picked in the onboarding wizard.
-    These are higher-confidence than anything the free-text parser can infer,
-    so they're written directly rather than round-tripped through NLP — and
-    validated against the real course/domain vocabulary so a tampered or
-    stale client payload can't create evidence for something that doesn't exist.
-    """
     metadata = load_course_metadata()
     valid_courses = set(metadata.keys())
     valid_domains = {m.domain for m in metadata.values()}
@@ -221,15 +214,6 @@ def skills(request):
 
 @login_required
 def update_known_skills(request):
-    """
-    Learner-driven skill evidence update (spec: known skills must be
-    editable after onboarding, not locked in at signup). Only touches
-    self-reported ("known", source="manual_skill_update") evidence — it
-    never overwrites or deletes evidence with a different source (e.g.
-    project_completion), per the "don't erase independent evidence" rule.
-    Always ownership-scoped via request.user.learner_profile; the client
-    never supplies a profile id.
-    """
     profile = getattr(request.user, "learner_profile", None)
     if not profile:
         return redirect("profiles:onboarding")
@@ -274,14 +258,6 @@ def update_known_skills(request):
 
 @login_required
 def update_interests(request):
-    """
-    Mirrors update_known_skills. Interest is a secondary personalization
-    signal (see apps.pathway.services.domain / project_recommender's
-    _interest_alignment): it can nudge among already-in-scope resources but
-    can never override the primary goal/domain — that separation is
-    enforced in the scoring code, not here; this view is only responsible
-    for validating and persisting the interest itself.
-    """
     profile = getattr(request.user, "learner_profile", None)
     if not profile:
         return redirect("profiles:onboarding")
@@ -302,12 +278,12 @@ def update_interests(request):
     if action == "add":
         if already_exists:
             messages.success(request, f'"{label}" is already one of your interests.')
-            return redirect("profiles:skills")  # no-op: don't create a pointless path version
+            return redirect("profiles:skills")
         LearnerInterest.objects.create(profile=profile, label=label)
         reason = f'Interest added: {label}.'
     elif action == "remove":
         if not already_exists:
-            return redirect("profiles:skills")  # no-op
+            return redirect("profiles:skills")
         LearnerInterest.objects.filter(profile=profile, label=label).delete()
         reason = f'Interest removed: {label}.'
     else:

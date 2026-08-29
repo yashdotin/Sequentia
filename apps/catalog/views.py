@@ -128,7 +128,7 @@ def search(request):
                 course_results.append({"course": course, "meta": meta})
 
         for p in load_project_seed():
-            haystack = (p.title + " " + " ".join(p.skills) + " " + " ".join(p.demonstrated_skill_names)).lower()
+            haystack = (p.title + " " + " ".join(p.skills) + " " + p.stage).lower()
             if q_lower in haystack:
                 project_results.append(p)
 
@@ -153,10 +153,7 @@ def projects_list(request):
     recommendations = recommend_projects(profile, path=path)
     states = {s.project_slug: s for s in profile.project_states.all()}
 
-    # Grouped by real project domain now, not the old fixed path-stage
-    # string — unlocking itself no longer depends on this grouping at all,
-    # it's purely presentational (matches the existing template's
-    # `{% for stage, projects in by_stage.items %}` loop unchanged).
+
     by_stage = {}
     for rec in recommendations:
         by_stage.setdefault(rec.project.domain, []).append({
@@ -208,18 +205,13 @@ def project_action(request, slug):
 
     state.save()
 
-    # Completing a project is real practical evidence for the skills it
-    # demonstrates — strengthen it as "inferred" (never "known"; a project
-    # isn't proof of mastery the way explicit self-report is) and only if
-    # there's no stronger evidence already. Only fires once, the first time
-    # the project transitions into completed/published.
+
     if action in ("complete", "publish") and not was_completed_before:
         from apps.profiles.models import LearnerSkillEvidence
-        evidence_names = list(projects[slug].skills) + list(projects[slug].demonstrated_skill_names)
-        for skill in dict.fromkeys(evidence_names):
+        for skill in projects[slug].skills:
             existing = LearnerSkillEvidence.objects.filter(profile=profile, skill=skill).first()
             if existing and existing.evidence_level == "known":
-                continue  # don't downgrade stronger, self-reported evidence
+                continue
             LearnerSkillEvidence.objects.update_or_create(
                 profile=profile, skill=skill,
                 defaults={"evidence_level": "inferred", "source": "project_completion"},

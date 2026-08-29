@@ -61,7 +61,7 @@
     </nav>
   </aside>
 
-  <!-- mobile bottom nav -->
+  
   <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-edge flex justify-around py-2 z-30">
     <a href="{% url 'dashboard:home' %}" class="flex flex-col items-center gap-0.5 px-2 py-1 text-[11px] {% if request.resolver_match.url_name == 'home' %}text-signal{% else %}text-ink-muted{% endif %}">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>

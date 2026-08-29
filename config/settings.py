@@ -1,6 +1,3 @@
-"""
-Django settings for the Sequentia project.
-"""
 
 import os
 from pathlib import Path
@@ -20,16 +17,12 @@ def env_bool(name, default=False):
     return val.strip().lower() in ("1", "true", "yes", "on")
 
 
-# ---------------------------------------------------------------------------
-# Core / security
-# ---------------------------------------------------------------------------
-
 SECRET_KEY = os.environ.get("SECRET_KEY", "")
 DEBUG = env_bool("DEBUG", default=False)
 
 if not SECRET_KEY:
     if DEBUG:
-        # Only acceptable because DEBUG is on (local dev). Production must set SECRET_KEY.
+
         SECRET_KEY = "django-insecure-local-dev-only-change-me"
     else:
         raise RuntimeError("SECRET_KEY environment variable is required when DEBUG=False.")
@@ -42,9 +35,6 @@ CSRF_TRUSTED_ORIGINS = [
     o.strip() for o in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()
 ]
 
-# ---------------------------------------------------------------------------
-# Applications
-# ---------------------------------------------------------------------------
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -53,7 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # Sequentia apps
+
     "apps.accounts",
     "apps.profiles",
     "apps.catalog",
@@ -93,9 +83,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-# ---------------------------------------------------------------------------
-# Database
-# ---------------------------------------------------------------------------
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
@@ -111,9 +98,6 @@ else:
         }
     }
 
-# ---------------------------------------------------------------------------
-# Auth
-# ---------------------------------------------------------------------------
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -126,18 +110,12 @@ LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "dashboard:home"
 LOGOUT_REDIRECT_URL = "accounts:login"
 
-# ---------------------------------------------------------------------------
-# I18N / TZ
-# ---------------------------------------------------------------------------
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-# ---------------------------------------------------------------------------
-# Static files
-# ---------------------------------------------------------------------------
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
@@ -150,9 +128,6 @@ STORAGES = {
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# ---------------------------------------------------------------------------
-# Sequentia ML data sources
-# ---------------------------------------------------------------------------
 
 DATA_DIR = BASE_DIR / "data"
 TRAIN_REVIEWS_CSV = os.environ.get("TRAIN_REVIEWS_CSV", str(DATA_DIR / "train.csv"))
@@ -162,10 +137,13 @@ COURSE_METADATA_CSV = os.environ.get(
 PROJECT_SEED_CSV = os.environ.get(
     "PROJECT_SEED_CSV", str(DATA_DIR / "project_seed.csv")
 )
+SKILL_VOCABULARY_CSV = os.environ.get(
+    "SKILL_VOCABULARY_CSV", str(DATA_DIR / "skill_vocabulary_seed.csv")
+)
 
-# ---------------------------------------------------------------------------
-# Email (password reset uses this)
-# ---------------------------------------------------------------------------
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")
+
 
 EMAIL_BACKEND = os.environ.get(
     "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
@@ -177,9 +155,6 @@ EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", default=True)
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "Sequentia <no-reply@sequentia.local>")
 
-# ---------------------------------------------------------------------------
-# Production security hardening (only biting when DEBUG=False)
-# ---------------------------------------------------------------------------
 
 if not DEBUG:
     SECURE_SSL_REDIRECT = env_bool("SECURE_SSL_REDIRECT", default=True)

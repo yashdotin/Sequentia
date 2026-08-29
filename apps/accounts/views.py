@@ -18,6 +18,6 @@ class RegisterView(CreateView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        # Log the learner straight in after registering — no separate login step.
+
         login(self.request, self.object)
         return response

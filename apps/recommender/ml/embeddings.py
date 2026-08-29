@@ -1,22 +1,3 @@
-"""
-Builds course-level semantic vectors as TF-IDF-weighted averages of word
-vectors trained ON THIS PROJECT'S OWN review corpus (gensim Word2Vec), not a
-generic pretrained model.
-
-Why train our own vectors instead of using a pretrained model (GloVe/spaCy):
-tried that first — generic pretrained vectors don't cover technical jargon
-("kubernetes", "pytorch", "django" are out-of-vocabulary for a general-English
-model), which silently zeroed out entire query categories. Training on the
-109,776 reviews themselves guarantees every term learners' goals will mention
-is in-vocabulary, and lets the model learn domain-specific relationships
-(kubernetes ~ docker ~ orchestration) that a generic corpus wouldn't capture.
-
-Why train once and persist rather than retrain per process: Word2Vec training
-over ~8.7M tokens takes ~30s+ — far too slow to redo on every server start,
-let alone every request. build_and_save() runs once (via a management command
-or automatically on first access) and writes artifacts to data/artifacts/;
-load_embeddings() just reads them back, which is fast.
-"""
 
 from __future__ import annotations
 
@@ -49,11 +30,11 @@ def _tokenize(text: str) -> list[str]:
 @dataclass(frozen=True)
 class CourseEmbeddingIndex:
     course_order: tuple[str, ...]
-    vectorizer: TfidfVectorizer  # unigram — feeds the Word2Vec-weighted vectors
-    vocab_vectors: np.ndarray  # (tfidf_vocab_size, VECTOR_SIZE)
-    course_vectors: np.ndarray  # (n_courses, VECTOR_SIZE), L2-normalized — Word2Vec side
-    lexical_vectorizer: TfidfVectorizer  # unigram+bigram — exact/technical-term precision
-    lexical_matrix: csr_matrix  # (n_courses, lexical_vocab_size)
+    vectorizer: TfidfVectorizer
+    vocab_vectors: np.ndarray
+    course_vectors: np.ndarray
+    lexical_vectorizer: TfidfVectorizer
+    lexical_matrix: csr_matrix
 
     def encode_query(self, text: str) -> np.ndarray:
         text = (text or "").strip()
@@ -75,7 +56,7 @@ def build_and_save(corpora: dict[str, CourseCorpus]) -> CourseEmbeddingIndex:
     course_order = tuple(corpora.keys())
     documents = [corpora[c].document for c in course_order]
 
-    # Train our own word vectors on the review corpus.
+
     tokenized_docs = [_tokenize(doc) for doc in documents]
     w2v = Word2Vec(
         sentences=tokenized_docs,
@@ -84,10 +65,10 @@ def build_and_save(corpora: dict[str, CourseCorpus]) -> CourseEmbeddingIndex:
         min_count=WORD2VEC_MIN_COUNT,
         workers=4,
         epochs=WORD2VEC_EPOCHS,
-        sg=1,  # skip-gram — better for smaller/rarer-term corpora than CBOW
+        sg=1,
     )
 
-    # TF-IDF gives the term weighting; Word2Vec gives the term meaning.
+
     vectorizer = TfidfVectorizer(
         stop_words="english",
         ngram_range=(1, 1),
@@ -107,11 +88,7 @@ def build_and_save(corpora: dict[str, CourseCorpus]) -> CourseEmbeddingIndex:
     norms[norms == 0] = 1.0
     course_vectors = course_vectors / norms
 
-    # Lexical (exact/technical-term) side of the hybrid: plain TF-IDF over
-    # unigrams+bigrams, same config the Phase 3 baseline used. Word2Vec-averaged
-    # vectors alone blur out precise matches ("kubernetes" stopped ranking
-    # "Kubernetes Orchestration" #1 once vectors were involved) — this half of
-    # the hybrid is what keeps exact/technical terms sharp.
+
     lexical_vectorizer = TfidfVectorizer(stop_words="english", ngram_range=(1, 2), sublinear_tf=True)
     lexical_matrix = lexical_vectorizer.fit_transform(documents)
 

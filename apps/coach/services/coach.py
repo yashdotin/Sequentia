@@ -1,10 +1,3 @@
-"""
-Answers learner questions about their OWN recommendations/path — grounded only
-in data already computed for them. Not a general teaching chatbot: if a
-question isn't about the path/recommendations, it says so rather than
-answering from general knowledge (which would violate the "no invented
-skill levels / scores" rule just as much as inventing a number would).
-"""
 
 from __future__ import annotations
 
@@ -18,6 +11,8 @@ from apps.profiles.views import _query_text_for
 from apps.recommender.ml.inference import get_engine
 from apps.recommender.services.explainability import explain_blocked, explain_recommendation
 from apps.recommender.services.scoring import score_all_courses
+
+from .gemini_client import phrase_grounded_answer
 
 
 def _find_mentioned_course(question: str) -> str | None:
@@ -34,6 +29,12 @@ def _find_mentioned_course(question: str) -> str | None:
 
 
 def answer_question(profile: LearnerProfile, question: str) -> str:
+    facts = _grounded_answer(profile, question)
+    phrased = phrase_grounded_answer(question, facts)
+    return phrased or facts
+
+
+def _grounded_answer(profile: LearnerProfile, question: str) -> str:
     question = (question or "").strip()
     if not question:
         return "Ask me something about your path or recommendations — e.g. \"why is this first?\""

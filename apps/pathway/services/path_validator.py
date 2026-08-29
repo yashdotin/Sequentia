@@ -1,20 +1,3 @@
-"""
-Real-data regression checks against a freshly generated path.
-
-generate_path() already enforces prerequisites as a hard constraint (blocked
-items are never marked current/upcoming) and now domain-scoping via
-domain.py — this module exists to *verify* those guarantees held, both as a
-runtime safety net (validate_path() is called right after generation; a
-critical failure is logged loudly since it means the eligibility logic
-itself has a bug) and as the thing the automated multi-domain tests assert
-against directly.
-
-This is deliberately validate-then-log rather than a reject-and-regenerate
-loop: generate_path's eligibility gating already makes most of these
-violations structurally impossible, so a validator failure here is a signal
-that the *generation logic itself* regressed, not routine input to route
-around.
-"""
 
 from __future__ import annotations
 
@@ -43,14 +26,9 @@ class ValidationResult:
 
 
 def validate_prerequisites(path: LearningPath, result: ValidationResult) -> None:
-    """Hard constraint: an item marked current/upcoming must have every
-    prerequisite satisfied by the *same* evidence signal generate_path
-    actually used (LearnerSkillEvidence 'known'/'inferred', per
-    scoring._skill_evidence_map — not course-completion history, which is a
-    different, stricter thing generate_path never required)."""
     metadata = load_course_metadata()
     evidence = {e.skill: e.evidence_level for e in path.profile.skills.all()}
-    # A course completed *within this same path* also counts, same as generate_path.
+
     completed_in_path = {i.course for i in path.items.all() if i.status == "completed"}
 
     def satisfied(prereq: str) -> bool:
@@ -68,22 +46,17 @@ def validate_prerequisites(path: LearningPath, result: ValidationResult) -> None
 
 
 def validate_sequence(path: LearningPath, result: ValidationResult) -> None:
-    """At most one item should ever be 'current' — the single next action."""
     current_count = path.items.filter(status="current").count()
     if current_count > 1:
         result.add_error(f"{current_count} items marked 'current'; expected at most 1")
 
 
 def validate_domain_relevance(path: LearningPath, result: ValidationResult) -> None:
-    """A recommended (non-completed, non-blocked) item's domain should be
-    the primary domain, a foundation domain, an adjacency-approved
-    supporting domain, or a domain the learner explicitly said they're
-    interested in. Anything else is contamination."""
     metadata = load_course_metadata()
     primary = determine_primary_domain(path.profile)
     relevant = relevant_domains(primary)
     if relevant is None:
-        return  # domain genuinely undetermined — nothing to contaminate against
+        return
     explicit_interests = set(path.profile.interests.values_list("label", flat=True))
 
     for item in path.items.filter(status__in=("current", "upcoming")):
@@ -108,8 +81,6 @@ def validate_duplicate_courses(path: LearningPath, result: ValidationResult) -> 
 
 
 def validate_completed_skill_exclusion(path: LearningPath, result: ValidationResult) -> None:
-    """A course the learner has already completed (history) should never be
-    recommended again as current/upcoming in a new path."""
     history_courses = set(path.profile.history.filter(status="completed").values_list("course", flat=True))
     for item in path.items.filter(status__in=("current", "upcoming")):
         if item.course in history_courses:

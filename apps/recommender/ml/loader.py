@@ -1,11 +1,3 @@
-"""
-Loads and aggregates the raw review dataset (train.csv).
-
-train.csv is review-level (109,776 rows: Index, Reviews, Course). For course-level
-semantic relevance we aggregate every review belonging to a course into one
-document per course, then vectorize at the course level (not the review level) —
-that's what inference.py needs to score "how relevant is course X to this goal".
-"""
 
 from __future__ import annotations
 
@@ -19,16 +11,15 @@ from .metadata import CourseMeta, MetadataError, load_course_metadata
 
 
 class DataLoadError(Exception):
-    """Raised when train.csv is missing, malformed, or inconsistent with the seed."""
+    pass
 
 
 @dataclass(frozen=True)
 class CourseCorpus:
-    """One course, its aggregated review text, its review count, and its metadata."""
 
     course: str
     review_count: int
-    document: str  # all reviews concatenated — the unit the TF-IDF vectorizer sees
+    document: str
     meta: CourseMeta
 
 
@@ -53,11 +44,6 @@ def build_course_corpora(
     reviews_path: str | Path | None = None,
     metadata_path: str | Path | None = None,
 ) -> dict[str, CourseCorpus]:
-    """
-    Returns {course_name: CourseCorpus}, one entry per course present in BOTH
-    train.csv and the metadata seed. Raises if the two sources disagree on which
-    courses exist — that mismatch means stale metadata, not something to paper over.
-    """
     df = load_review_dataframe(reviews_path)
     metadata = load_course_metadata(metadata_path)
 
@@ -65,12 +51,10 @@ def build_course_corpora(
     meta_courses = set(metadata.keys())
 
     only_in_reviews = review_courses - meta_courses
-    only_in_meta = meta_courses - review_courses
-    if only_in_reviews or only_in_meta:
+    if only_in_reviews:
         raise DataLoadError(
-            "train.csv and course_metadata_seed.csv disagree on course names. "
-            f"In reviews but not metadata: {only_in_reviews or 'none'}. "
-            f"In metadata but not reviews: {only_in_meta or 'none'}."
+            "train.csv references course(s) with no metadata entry — stale "
+            f"or missing metadata: {only_in_reviews}"
         )
 
     corpora: dict[str, CourseCorpus] = {}
@@ -86,3 +70,9 @@ def build_course_corpora(
         )
 
     return corpora
+
+
+def courses_without_review_data(metadata_path: str | Path | None = None, reviews_path: str | Path | None = None) -> set[str]:
+    metadata = load_course_metadata(metadata_path)
+    df = load_review_dataframe(reviews_path)
+    return set(metadata.keys()) - set(df["Course"].unique())

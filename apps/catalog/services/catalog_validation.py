@@ -1,178 +1,192 @@
-"""Data-only catalog validation for the canonical Sequentia layer."""
+
 from __future__ import annotations
 
-import csv
-from collections import defaultdict
+from collections import Counter, defaultdict
 from dataclasses import dataclass, field
-from pathlib import Path
 
-from django.conf import settings
+from apps.catalog.services.projects import ProjectMeta, load_project_seed
+from apps.recommender.ml.metadata import CourseMeta, load_course_metadata
+from apps.recommender.ml.skills import Skill, load_skill_vocabulary
 
-from apps.catalog.services.projects import load_project_seed
-from apps.recommender.ml.canonical import load_course_skill_map, load_role_catalog, load_skill_catalog
-from apps.recommender.ml.metadata import load_course_metadata
+MIN_PROJECTS_PER_ROLE = 10
+MIN_COURSES_PER_DOMAIN = 3
 
 
 @dataclass
-class CatalogValidationResult:
+class ValidationReport:
+    skill_count: int = 0
+    course_count: int = 0
+    project_count: int = 0
+    role_count: int = 0
+    domain_count: int = 0
+
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
-    metrics: dict[str, int] = field(default_factory=dict)
+
+
+    orphan_skills_no_course: list[str] = field(default_factory=list)
+    orphan_skills_no_project: list[str] = field(default_factory=list)
+    thin_roles: dict[str, int] = field(default_factory=dict)
+    thin_domains: dict[str, int] = field(default_factory=dict)
+    projects_per_role: dict[str, int] = field(default_factory=dict)
+
+
+    projects_with_distinct_prerequisites: int = 0
+
+
+    courses_without_review_data: list[str] = field(default_factory=list)
 
     @property
     def ok(self) -> bool:
         return not self.errors
 
 
-def _find_cycles(skills) -> list[str]:
-    graph = {sid: set(meta.prerequisites) for sid, meta in skills.items()}
-    visiting, visited, cycles = set(), set(), []
+def run_validation() -> ValidationReport:
+    report = ValidationReport()
 
-    def dfs(node, path):
-        if node in visiting:
-            idx = path.index(node) if node in path else 0
-            cycles.append(" -> ".join(path[idx:] + [node]))
-            return
-        if node in visited:
-            return
-        visiting.add(node)
-        for dep in graph.get(node, set()):
-            if dep in graph:
-                dfs(dep, path + [dep])
-        visiting.remove(node)
-        visited.add(node)
+    skills = load_skill_vocabulary()
+    courses = load_course_metadata()
+    projects = load_project_seed()
 
-    for node in graph:
-        if node not in visited:
-            dfs(node, [node])
-    return cycles
+    report.skill_count = len(skills)
+    report.course_count = len(courses)
+    report.project_count = len(projects)
 
+    known_roles = _known_roles(skills)
+    known_domains = {s.domain for s in skills.values()}
+    report.role_count = len(known_roles)
+    report.domain_count = len(known_domains)
 
-def _domains_from_course_seed() -> set[str]:
-    path = Path(settings.COURSE_METADATA_CSV)
-    if not path.exists():
-        return set()
-    with path.open(newline="", encoding="utf-8") as handle:
-        return {r.get("domain", "").strip() for r in csv.DictReader(handle) if r.get("domain", "").strip()}
+    _check_orphan_skills(skills, courses, projects, report)
+    _check_project_integrity(projects, courses, known_roles, report)
+    _check_duplicate_slugs(projects, report)
+    _check_coverage(skills, courses, projects, known_roles, report)
 
-
-def _infer_project_skill_ids(project, course_skill_map):
-    ids=[]
-    for skill_name in project.skills:
-        ids.extend(course_skill_map.get(skill_name, ()))
-    return set(ids)
-
-
-def validate_catalog() -> CatalogValidationResult:
-    result = CatalogValidationResult()
-    skills = load_skill_catalog()
-    roles = load_role_catalog()
-    course_skill_map = load_course_skill_map()
-
-    if not skills:
-        result.error("data/skill_seed.csv is missing or contains no canonical skills")
-    if not roles:
-        result.error("data/role_seed.csv is missing or contains no supported roles")
-    if not course_skill_map:
-        result.error("data/course_skill_map.csv is missing or contains no course mappings")
+    report.projects_with_distinct_prerequisites = sum(
+        1 for p in projects if set(p.prerequisite_skill_ids) - set(p.demonstrates_skill_ids)
+    )
 
     try:
-        metadata = load_course_metadata()
+        from apps.recommender.ml.loader import courses_without_review_data
+        no_reviews = sorted(courses_without_review_data())
+        report.courses_without_review_data = no_reviews
+        if no_reviews:
+            report.warnings.append(
+                f"{len(no_reviews)} course(s) have no train.csv review data yet, so they "
+                f"won't appear in semantic course scoring (see courses_without_review_data)"
+            )
     except Exception as exc:
-        result.error(f"Unable to load course metadata: {exc}")
-        metadata = {}
+        report.errors.append(f"Could not check review-data coverage: {exc}")
 
-    try:
-        projects = load_project_seed()
-    except Exception as exc:
-        result.error(f"Unable to load projects: {exc}")
-        projects = []
+    return report
 
-    known_skill_ids = set(skills)
-    known_role_names = {m.role_name.lower() for m in roles.values()}
-    resources_by_skill = defaultdict(int)
-    projects_by_skill = defaultdict(int)
 
-    for sid, meta in skills.items():
-        for dep in meta.prerequisites:
-            if dep not in known_skill_ids:
-                result.error(f"Skill {sid} references unknown prerequisite {dep}")
-        for rel in meta.related_skills:
-            if rel not in known_skill_ids:
-                result.error(f"Skill {sid} references unknown related skill {rel}")
-        if meta.parent_skill and meta.parent_skill not in known_skill_ids:
-            result.error(f"Skill {sid} references unknown parent skill {meta.parent_skill}")
-        for role in meta.applicable_roles:
-            if role.lower() not in known_role_names:
-                result.error(f"Skill {sid} references unsupported role {role}")
+def _known_roles(skills: dict[str, Skill]) -> set[str]:
+    roles: set[str] = set()
+    for skill in skills.values():
+        roles.update(skill.applicable_roles)
+    return roles
 
-    for cycle in _find_cycles(skills):
-        result.error(f"Skill dependency cycle: {cycle}")
 
-    for role in roles.values():
-        for sid in role.required_skill_ids:
-            if sid not in known_skill_ids:
-                result.error(f"Role {role.role_name} references unknown skill {sid}")
+def _check_orphan_skills(
+    skills: dict[str, Skill],
+    courses: dict[str, CourseMeta],
+    projects: list[ProjectMeta],
+    report: ValidationReport,
+) -> None:
+    skills_with_courses: set[str] = set()
+    for course in courses.values():
+        skills_with_courses.update(course.canonical_skill_ids)
 
-    for course, meta in metadata.items():
-        ids = meta.canonical_skill_ids
-        if not ids:
-            result.error(f"Resource '{course}' has no canonical skill mapping")
-        for sid in ids:
-            if sid not in known_skill_ids:
-                result.error(f"Resource '{course}' references unknown skill {sid}")
-            else:
-                resources_by_skill[sid] += 1
-        for sid in meta.prerequisite_skill_ids:
-            if sid not in known_skill_ids:
-                result.error(f"Resource '{course}' has unknown prerequisite skill {sid}")
-        for role in meta.target_roles:
-            if role.lower() not in known_role_names:
-                result.error(f"Resource '{course}' references unsupported role {role}")
+    for skill_id in skills:
+        if skill_id not in skills_with_courses:
+            report.orphan_skills_no_course.append(skill_id)
 
-    project_roles = defaultdict(int)
+    if report.orphan_skills_no_course:
+        report.errors.append(
+            f"{len(report.orphan_skills_no_course)} skill(s) have no course teaching them: "
+            f"{', '.join(sorted(report.orphan_skills_no_course))}"
+        )
+
+
+    course_to_skills = {name: meta.canonical_skill_ids for name, meta in courses.items()}
+    skills_with_projects: set[str] = set()
     for project in projects:
-        project_skill_ids = set(project.required_skill_ids) | set(project.prerequisite_skill_ids) | set(project.demonstrates_skill_ids) | set(project.compatible_stack_ids)
-        if not project_skill_ids:
-            project_skill_ids.update(_infer_project_skill_ids(project, course_skill_map))
-        if not project_skill_ids:
-            result.error(f"Project '{project.slug}' cannot resolve any canonical skills")
-        for sid in project_skill_ids:
-            if sid not in known_skill_ids:
-                result.error(f"Project '{project.slug}' references unknown skill {sid}")
-            else:
-                projects_by_skill[sid] += 1
-        if not project.prerequisite_skill_ids:
-            result.warning(f"Project '{project.slug}' has no explicit prerequisite_skill_ids")
-        if not project.demonstrates_skill_ids:
-            result.warning(f"Project '{project.slug}' has no explicit demonstrates_skill_ids")
+        for course_name in project.skills:
+            skills_with_projects.update(course_to_skills.get(course_name, ()))
+
+    for skill_id in skills:
+        if skill_id not in skills_with_projects:
+            report.orphan_skills_no_project.append(skill_id)
+
+    if report.orphan_skills_no_project:
+        report.warnings.append(
+            f"{len(report.orphan_skills_no_project)} skill(s) are taught but never "
+            f"required/demonstrated by any project (see section 15)"
+        )
+
+
+def _check_project_integrity(
+    projects: list[ProjectMeta],
+    courses: dict[str, CourseMeta],
+    known_roles: set[str],
+    report: ValidationReport,
+) -> None:
+    for project in projects:
+        for course_name in project.skills:
+            if course_name not in courses:
+                report.errors.append(
+                    f"Project '{project.slug}' references unknown course '{course_name}'"
+                )
         for role in project.target_roles:
-            project_roles[role.lower()] += 1
-            if role.lower() not in known_role_names:
-                result.error(f"Project '{project.slug}' references unsupported role {role}")
+            if role not in known_roles:
+                report.errors.append(
+                    f"Project '{project.slug}' targets role '{role}' with no skill "
+                    f"in the vocabulary mapped to it — not a valid role (section 17)"
+                )
+        if not project.target_roles:
+            report.errors.append(f"Project '{project.slug}' has no target_roles")
+        if not project.skills:
+            report.errors.append(f"Project '{project.slug}' has no required skills")
 
-    for sid in sorted(known_skill_ids):
-        if resources_by_skill[sid] == 0:
-            result.warnings.append(f"Orphan skill: {sid} has no resource")
-        if projects_by_skill[sid] == 0:
-            result.warnings.append(f"Skill {sid} has no project relationship")
 
-    for role in roles.values():
-        matching_resources = sum(1 for m in metadata.values() if role.role_name.lower() in {x.lower() for x in m.target_roles})
-        matching_projects = project_roles[role.role_name.lower()]
-        if matching_resources == 0:
-            result.warnings.append(f"Role {role.role_name} has no explicitly tagged resources")
-        if matching_projects == 0:
-            result.warnings.append(f"Role {role.role_name} has no project coverage yet")
+def _check_duplicate_slugs(projects: list[ProjectMeta], report: ValidationReport) -> None:
+    seen = Counter(p.slug for p in projects)
+    for slug, count in seen.items():
+        if count > 1:
+            report.errors.append(f"Duplicate project slug '{slug}' ({count} occurrences)")
 
-    result.metrics = {
-        "canonical_skills": len(skills),
-        "resources": len(metadata),
-        "projects": len(projects),
-        "supported_roles": len(roles),
-        "domains": len(_domains_from_course_seed()),
-        "dependency_cycles": len(_find_cycles(skills)),
-        "course_role_mappings": sum(bool(m.target_roles) for m in metadata.values()),
-        "project_role_mappings": sum(len(p.target_roles) for p in projects),
-    }
-    return result
+
+def _check_coverage(
+    skills: dict[str, Skill],
+    courses: dict[str, CourseMeta],
+    projects: list[ProjectMeta],
+    known_roles: set[str],
+    report: ValidationReport,
+) -> None:
+    domain_course_counts = Counter(c.domain for c in courses.values())
+    for domain, count in domain_course_counts.items():
+        if count < MIN_COURSES_PER_DOMAIN:
+            report.thin_domains[domain] = count
+
+    role_project_counts: Counter[str] = Counter()
+    for project in projects:
+        for role in project.target_roles:
+            role_project_counts[role] += 1
+    report.projects_per_role = dict(role_project_counts)
+
+    for role in known_roles:
+        count = role_project_counts.get(role, 0)
+        if count < MIN_PROJECTS_PER_ROLE:
+            report.thin_roles[role] = count
+
+    if report.thin_roles:
+        report.warnings.append(
+            f"{len(report.thin_roles)} role(s) below the {MIN_PROJECTS_PER_ROLE}-project "
+            f"target from section 8 (see thin_roles for counts)"
+        )
+    if report.thin_domains:
+        report.warnings.append(
+            f"{len(report.thin_domains)} domain(s) below {MIN_COURSES_PER_DOMAIN} courses "
+            f"(see thin_domains for counts)"
+        )

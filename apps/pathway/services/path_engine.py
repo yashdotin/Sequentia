@@ -1,11 +1,3 @@
-"""
-Builds the personalized, sequenced learning path — the core algorithm.
-
-Answers "what sequence of resources is most useful for THIS learner", not just
-"which courses score highest individually": prerequisite-blocked courses are
-never marked current/upcoming no matter how relevant they score, and exactly
-one item is ever marked "current" (the single next best action).
-"""
 
 from __future__ import annotations
 
@@ -26,12 +18,7 @@ from apps.recommender.models import Recommendation
 from apps.recommender.services.explainability import explain_recommendation
 from apps.recommender.services.scoring import CourseScore, score_all_courses
 
-# --- Legacy constants -------------------------------------------------
-# No longer used by generate_path (see domain.py) — this fixed, universal
-# ordering was the actual root cause of the "every path looks ML-shaped"
-# bug: it unconditionally walked every learner through a Machine Learning
-# and Deep Learning stage regardless of their goal. Kept only in case
-# anything external still imports these names.
+
 DOMAIN_TO_STAGE = {
     "Programming Foundations": "Foundations",
     "Math Foundations": "Foundations",
@@ -62,12 +49,6 @@ ITEMS_PER_STAGE = 4
 
 
 def _stage_for_domain(domain: str) -> str:
-    """Foundational domains collapse into one 'Foundations' stage; every
-    other domain becomes its own named stage. Replaces the old fixed
-    6-stage bucket, so a Web Development path shows stages named
-    'Web Development' / 'Cloud' / ... instead of a generic ML-shaped
-    'Core Skills' / 'Machine Learning' / 'Deep Learning' pipeline that
-    never applied to it in the first place."""
     return "Foundations" if domain in FOUNDATION_DOMAINS else domain
 
 
@@ -85,10 +66,7 @@ def _ordered_stage_names(primary_domain, relevant, domains_present: set[str]) ->
         if d in domains_present and d not in stages:
             stages.append(d)
 
-    # Anything else present — either the domain is unconstrained (relevant
-    # is None), or it's a domain the learner has real history in outside
-    # their current target — still gets shown, just after the main sequence,
-    # so completed work never silently disappears.
+
     leftover = sorted(
         d for d in domains_present
         if _stage_for_domain(d) != "Foundations" and d not in stages
@@ -98,12 +76,6 @@ def _ordered_stage_names(primary_domain, relevant, domains_present: set[str]) ->
 
 
 def _portfolio_relevant_skills() -> set[str]:
-    """
-    Courses that appear as a listed skill in the curated project seed
-    (data/project_seed.csv). Read directly rather than importing the catalog
-    app, to avoid a circular import (catalog -> dashboard -> pathway).
-    Used only as an Internship Mode tiebreak, never to change the core score.
-    """
     path = settings.PROJECT_SEED_CSV
     skills: set[str] = set()
     try:
@@ -121,16 +93,6 @@ def _covered_courses(profile: LearnerProfile) -> set[str]:
 
 @transaction.atomic
 def generate_path(profile: LearnerProfile, query_text: str, reason: str) -> LearningPath:
-    """
-    Scores every course, constrains eligible/blocked candidates to the
-    learner's actual target domain (+ legitimate adjacent domains) so a
-    Web Development goal doesn't pull in Machine Learning courses just
-    because they scored well semantically, buckets what's left into
-    per-learner stages, picks exactly one "current" item, and persists the
-    result as a new path version. Never mutates an existing version —
-    every regeneration is a new row, which is what makes path
-    history/versioning possible.
-    """
     scores = score_all_courses(profile, query_text)
     covered = _covered_courses(profile)
     by_course: dict[str, CourseScore] = {s.course: s for s in scores}
@@ -151,9 +113,9 @@ def generate_path(profile: LearnerProfile, query_text: str, reason: str) -> Lear
 
     for s in scores:
         if s.course in covered:
-            completed.append(s)  # history is never domain-filtered — it already happened
+            completed.append(s)
         elif not in_scope(s):
-            continue  # out-of-domain and not eligible/blocked: don't recommend, don't show as blocked
+            continue
         elif s.missing_prerequisites:
             blocked.append(s)
         else:
@@ -163,9 +125,8 @@ def generate_path(profile: LearnerProfile, query_text: str, reason: str) -> Lear
 
     portfolio_skills = _portfolio_relevant_skills() if profile.internship_mode else set()
     if profile.internship_mode:
-        # Stable secondary sort: among close scores, surface courses that feed
-        # a real curated project first. Never overrides a meaningfully higher
-        # base score — this is a tiebreak, not a reweighting.
+
+
         eligible.sort(key=lambda s: (round(s.total, 2), s.course in portfolio_skills), reverse=True)
 
     current_course = eligible[0].course if eligible else None
@@ -249,23 +210,16 @@ def generate_path(profile: LearnerProfile, query_text: str, reason: str) -> Lear
     validation = validate_path(path)
 
     if not validation.ok:
-        # Hard rule (spec-mandated): an invalid path must never be the
-        # current one. Structurally this should be near-impossible — the
-        # eligibility gating above already enforces prerequisites — so a
-        # failure here means something upstream regressed, not a normal
-        # runtime condition. Roll back to the previous version rather than
-        # silently serving a broken recommendation.
+
+
         path.is_current = False
         path.save(update_fields=["is_current"])
         if prev:
             prev.is_current = True
             prev.save(update_fields=["is_current"])
             return prev
-        # No previous version to fall back to (this was the very first
-        # generation for this learner) — there's nothing valid to serve
-        # instead, so this one has to stay current despite the failure.
-        # This should only ever happen if the eligibility logic itself has
-        # a bug; it is not a normal path for real input.
+
+
         path.is_current = True
         path.save(update_fields=["is_current"])
 

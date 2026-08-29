@@ -26,10 +26,6 @@ def _greeting() -> str:
 
 
 def _stage_summary(items):
-    """Real per-stage rollup from actual path items — no fabricated percentages.
-    Stage order follows the order stages first appear in the (position-ordered)
-    item list, since generate_path now derives stages per-learner from their
-    actual goal domain rather than a fixed universal list."""
     summary = []
     by_stage = {}
     stage_order = []
@@ -99,11 +95,6 @@ def home(request):
 
 
 def _domain_breakdown(items):
-    """
-    Real per-domain readiness: completed / total path items in that domain.
-    Grounded in apps.recommender.ml.metadata (the real course->domain map),
-    not a fabricated competency score.
-    """
     metadata = load_course_metadata()
     by_domain = {}
     for item in items:

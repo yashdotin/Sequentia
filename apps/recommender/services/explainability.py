@@ -1,10 +1,3 @@
-"""
-Turns a CourseScore's components into readable explanation text.
-
-Every sentence here is derived directly from a number already computed in
-scoring.py — nothing is invented, and nothing references skill levels or
-readiness the scorer didn't actually compute.
-"""
 
 from __future__ import annotations
 
@@ -19,9 +12,7 @@ def explain_recommendation(score: CourseScore) -> str:
     elif score.components["semantic_relevance"] > 0.15:
         reasons.append("relates to your stated goal")
 
-    if score.components.get("role_alignment", 0) >= 1.0 and score.meta.target_roles:
-        reasons.append(f"directly supports your target role ({score.meta.target_roles[0]})")
-    elif score.components["interest_alignment"] > 0:
+    if score.components["interest_alignment"] > 0:
         reasons.append(f"aligned with your interest in {score.meta.domain}")
 
     if score.missing_prerequisites:
@@ -49,7 +40,6 @@ def explain_blocked(score: CourseScore) -> str:
 
 
 def explain_order(current: CourseScore, later: CourseScore) -> str:
-    """Why `current` is placed before `later` in the path."""
     if later.meta.course in current.meta.prerequisites:
         return (
             f"{later.meta.course} appears later because {current.meta.course} "

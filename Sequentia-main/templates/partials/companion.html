@@ -1,8 +1,0 @@
-{% comment %}
-Usage: {% include "partials/companion.html" with state="ready" %}
-States: ready | analyzing | celebrate
-{% endcomment %}
-<span class="companion companion-{{ state|default:'ready' }}" aria-hidden="true">
-  <span class="companion-ring"></span>
-  <span class="companion-core"></span>
-</span>

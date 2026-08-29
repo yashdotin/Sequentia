@@ -40,10 +40,6 @@ class LearnerInterest(models.Model):
 
 
 class LearnerSkillEvidence(models.Model):
-    """
-    Evidence the learner has some level of a skill/course topic — never a raw
-    numeric confidence score, only qualitative levels, per the no-fabrication rule.
-    """
 
     EVIDENCE_CHOICES = [
         ("known", "Known — learner explicitly stated this"),
