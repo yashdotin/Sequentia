@@ -279,3 +279,99 @@ class InvalidPathNeverBecomesCurrentTests(TestCase):
         v2 = profile.paths.filter(version=2).first()
         self.assertIsNotNone(v2)
         self.assertFalse(v2.is_current)
+
+
+class StackFilteringTests(TestCase):
+    """Regression coverage for the JS-vs-Python-vs-Java stack mixing bug:
+    a learner with known JavaScript/React skills must get a JS-track path
+    (Node/React/Django-free), and Cloud/DevOps must not appear as full
+    stages for a plain Full Stack Developer goal."""
+
+    def test_javascript_known_skills_exclude_python_and_java_tracks(self):
+        _, profile = _make_profile("jsstacklearner", "I want to become a Full Stack Developer.")
+        LearnerSkillEvidence.objects.create(profile=profile, skill="JavaScript Fundamentals", evidence_level="known")
+        LearnerSkillEvidence.objects.create(profile=profile, skill="React.js Development", evidence_level="known")
+        path = generate_path(profile, profile.goal_text, reason="Initial")
+        courses = set(path.items.values_list("course", flat=True))
+        self.assertNotIn("Python for Absolute Beginners", courses)
+        self.assertNotIn("Django Web Framework", courses)
+        self.assertNotIn("Java Programming Basics", courses)
+        self.assertNotIn("C Plus Plus Programming Essentials", courses)
+
+    def test_python_known_skills_exclude_javascript_track(self):
+        _, profile = _make_profile("pystacklearner", "I want to become a Full Stack Developer.")
+        LearnerSkillEvidence.objects.create(profile=profile, skill="Python for Absolute Beginners", evidence_level="known")
+        LearnerSkillEvidence.objects.create(profile=profile, skill="Python OOP Concepts", evidence_level="known")
+        path = generate_path(profile, profile.goal_text, reason="Initial")
+        courses = set(path.items.values_list("course", flat=True))
+        self.assertNotIn("Node.js Backend Development", courses)
+        self.assertNotIn("React.js Development", courses)
+        self.assertNotIn("Angular Framework Essentials", courses)
+        self.assertIn("Django Web Framework", courses)
+
+    def test_full_stack_goal_does_not_surface_cloud_or_devops_stages(self):
+        _, profile = _make_profile("fullstacknoclutter", "I want to become a Full Stack Developer.")
+        LearnerSkillEvidence.objects.create(profile=profile, skill="JavaScript Fundamentals", evidence_level="known")
+        path = generate_path(profile, profile.goal_text, reason="Initial")
+        stages = set(path.items.values_list("stage", flat=True))
+        self.assertNotIn("Cloud", stages)
+        self.assertNotIn("DevOps", stages)
+
+    def test_math_foundations_hidden_for_non_quantitative_goal(self):
+        _, profile = _make_profile("nomathneeded", "I want to become a Full Stack Developer.")
+        LearnerSkillEvidence.objects.create(profile=profile, skill="JavaScript Fundamentals", evidence_level="known")
+        path = generate_path(profile, profile.goal_text, reason="Initial")
+        courses = set(path.items.values_list("course", flat=True))
+        self.assertNotIn("Calculus for Data Science", courses)
+        self.assertNotIn("Linear Algebra for Machine Learning", courses)
+
+    def test_math_foundations_shown_for_data_scientist_goal(self):
+        _, profile = _make_profile("mathneeded", "I want to become a Data Scientist.")
+        path = generate_path(profile, profile.goal_text, reason="Initial")
+        courses = set(path.items.values_list("course", flat=True))
+        self.assertTrue(
+            {"Calculus for Data Science", "Probability and Statistics", "Linear Algebra for Machine Learning"} & courses
+        )
+
+    def test_no_known_skills_does_not_crash_and_returns_a_path(self):
+        _, profile = _make_profile("nosignal", "I want to become a Full Stack Developer.")
+        path = generate_path(profile, profile.goal_text, reason="Initial")
+        self.assertGreater(path.items.count(), 0)
+
+
+class StackDetectionUnitTests(TestCase):
+    def test_detects_javascript_from_goal_text_when_no_skills_known(self):
+        from apps.pathway.services.stack import detect_stack
+        _, profile = _make_profile("jstextdetect", "I want to learn React and Node.js to become a full stack developer")
+        self.assertEqual(detect_stack(profile), "javascript")
+
+    def test_detects_python_from_goal_text_when_no_skills_known(self):
+        from apps.pathway.services.stack import detect_stack
+        _, profile = _make_profile("pytextdetect", "I want to learn Django and Python for backend development")
+        self.assertEqual(detect_stack(profile), "python")
+
+    def test_ambiguous_goal_text_returns_none(self):
+        from apps.pathway.services.stack import detect_stack
+        _, profile = _make_profile("ambiguous", "I want to become a developer")
+        self.assertIsNone(detect_stack(profile))
+
+    def test_known_skill_evidence_takes_priority_over_goal_text(self):
+        from apps.pathway.services.stack import detect_stack
+        _, profile = _make_profile("priority", "I want to learn Django")
+        LearnerSkillEvidence.objects.create(profile=profile, skill="JavaScript Fundamentals", evidence_level="known")
+        LearnerSkillEvidence.objects.create(profile=profile, skill="React.js Development", evidence_level="known")
+        self.assertEqual(detect_stack(profile), "javascript")
+
+    def test_stack_conflicts_true_for_competing_track(self):
+        from apps.pathway.services.stack import stack_conflicts
+        self.assertTrue(stack_conflicts(("django",), "javascript"))
+        self.assertFalse(stack_conflicts(("react",), "javascript"))
+
+    def test_stack_conflicts_false_for_universal_skill(self):
+        from apps.pathway.services.stack import stack_conflicts
+        self.assertFalse(stack_conflicts(("git",), "python"))
+        self.assertFalse(stack_conflicts(("sql",), "javascript"))
+
+    def test_stack_conflicts_false_when_no_stack_detected(self):
+        from apps.pathway.services.stack import stack_conflicts
+        self.assertFalse(stack_conflicts(("django",), None))

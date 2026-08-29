@@ -13,6 +13,7 @@ from apps.pathway.services.domain import (
     determine_primary_domain,
     relevant_domains,
 )
+from apps.pathway.services.stack import detect_stack, stack_conflicts
 from apps.profiles.models import LearnerProfile
 from apps.recommender.models import Recommendation
 from apps.recommender.services.explainability import explain_recommendation
@@ -46,6 +47,7 @@ STAGE_ORDER = [
     "Specialization",
 ]
 ITEMS_PER_STAGE = 4
+QUANT_ADJACENT_DOMAINS = {"Machine Learning", "Deep Learning", "Data Analytics", "Data Engineering", "MLOps"}
 
 
 def _stage_for_domain(domain: str) -> str:
@@ -100,11 +102,21 @@ def generate_path(profile: LearnerProfile, query_text: str, reason: str) -> Lear
     primary_domain = determine_primary_domain(profile)
     relevant = relevant_domains(primary_domain)
     explicit_interests = set(profile.interests.values_list("label", flat=True))
+    stack = detect_stack(profile)
+    wants_math = bool(
+        (primary_domain in QUANT_ADJACENT_DOMAINS)
+        or (relevant and relevant & QUANT_ADJACENT_DOMAINS)
+        or ("Math Foundations" in explicit_interests)
+    )
 
     def in_scope(course_score: CourseScore) -> bool:
+        if stack_conflicts(course_score.meta.canonical_skill_ids, stack):
+            return False
+        domain = course_score.meta.domain
+        if domain == "Math Foundations" and not wants_math:
+            return False
         if relevant is None:
             return True
-        domain = course_score.meta.domain
         return domain in FOUNDATION_DOMAINS or domain in relevant or domain in explicit_interests
 
     completed: list[CourseScore] = []

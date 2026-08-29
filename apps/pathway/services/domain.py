@@ -13,8 +13,8 @@ FOUNDATION_DOMAINS = {
 
 
 DOMAIN_ADJACENCY: dict[str, set[str]] = {
-    "Web Development": {"Databases", "Cloud", "DevOps", "Developer Tools"},
-    "Mobile Development": {"Databases", "Cloud", "Developer Tools"},
+    "Web Development": {"Databases"},
+    "Mobile Development": {"Databases"},
     "Data Analytics": {"Databases", "Math Foundations"},
     "Machine Learning": {"Math Foundations", "Data Analytics", "Deep Learning", "MLOps"},
     "Deep Learning": {"Machine Learning", "MLOps", "Math Foundations"},
