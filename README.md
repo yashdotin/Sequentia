@@ -1,4 +1,4 @@
-# SEQUENTIA
+#  SEQUENTIA
 
 ### Your Goal. Your Sequence. Your Path.
 
