@@ -183,7 +183,7 @@ def generate_path(profile: LearnerProfile, query_text: str, reason: str) -> Lear
             stage_blocked = [s for s in blocked if s.meta.domain == stage]
 
         stage_items = (
-            stage_completed[:ITEMS_PER_STAGE]
+            stage_completed
             + stage_eligible[:ITEMS_PER_STAGE]
             + stage_blocked[:ITEMS_PER_STAGE]
         )
