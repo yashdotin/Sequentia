@@ -121,9 +121,19 @@ def mark_item(request):
         path_now_done = all(s.status == "completed" for s in all_siblings)
 
         query_text = _query_text_for(profile)
-        generate_path(profile, query_text, reason=reason)
+        original_path_id = item.path_id
+        new_path = generate_path(profile, query_text, reason=reason)
 
-        if path_now_done and all_siblings:
+        if new_path.id == original_path_id:
+            # generate_path fell back to the old path because the freshly
+            # generated one failed validation — the completion was still
+            # recorded in history, but the path view won't reflect it yet.
+            messages.warning(
+                request,
+                "Marked complete, but your path couldn't be safely regenerated — "
+                "check the server logs for the validation error.",
+            )
+        elif path_now_done and all_siblings:
             messages.success(request, "🏆 You completed every step in this path!", extra_tags="celebrate")
         elif stage_now_done and stage_siblings:
             messages.success(request, f"🎉 You've unlocked {item.stage}!", extra_tags="celebrate")
