@@ -93,7 +93,7 @@ def _covered_courses(profile: LearnerProfile) -> set[str]:
 
 
 @transaction.atomic
-def generate_path(profile: LearnerProfile, query_text: str, reason: str) -> LearningPath
+def generate_path(profile: LearnerProfile, query_text: str, reason: str) -> LearningPath:
     profile = LearnerProfile.objects.select_for_update().get(pk=profile.pk)
     scores = score_all_courses(profile, query_text)
     covered = _covered_courses(profile)
