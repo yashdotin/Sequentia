@@ -1,10 +1,10 @@
-
 from __future__ import annotations
 
 import csv
 
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Max
 
 from apps.pathway.models import LearningPath, LearningPathItem, PathChangeEvent
 from apps.pathway.services.domain import (
@@ -94,7 +94,11 @@ def _covered_courses(profile: LearnerProfile) -> set[str]:
 
 @transaction.atomic
 def generate_path(profile: LearnerProfile, query_text: str, reason: str) -> LearningPath:
+    # Lock this profile's row for the duration of the transaction so that
+    # concurrent calls (double-click, two tabs, a retried request) serialize
+    # instead of racing on the version-number read below.
     profile = LearnerProfile.objects.select_for_update().get(pk=profile.pk)
+
     scores = score_all_courses(profile, query_text)
     covered = _covered_courses(profile)
     by_course: dict[str, CourseScore] = {s.course: s for s in scores}
@@ -147,9 +151,14 @@ def generate_path(profile: LearnerProfile, query_text: str, reason: str) -> Lear
     if prev:
         prev.is_current = False
         prev.save(update_fields=["is_current"])
-        next_version = prev.version + 1
-    else:
-        next_version = 1
+
+    # Base next_version on the highest version ever used for this profile,
+    # not just the current one — a version can exist on disk without being
+    # "current" (e.g. a previous attempt that failed validation below and
+    # was demoted instead of deleted). Using prev.version + 1 alone lets
+    # that orphaned version number collide with a freshly generated one.
+    max_version = profile.paths.aggregate(Max("version"))["version__max"] or 0
+    next_version = max_version + 1
 
     path = LearningPath.objects.create(
         profile=profile,
@@ -222,15 +231,11 @@ def generate_path(profile: LearnerProfile, query_text: str, reason: str) -> Lear
     validation = validate_path(path)
 
     if not validation.ok:
-
-
-        path.is_current = False
-        path.save(update_fields=["is_current"])
         if prev:
             prev.is_current = True
             prev.save(update_fields=["is_current"])
+            path.delete()
             return prev
-
 
         path.is_current = True
         path.save(update_fields=["is_current"])
